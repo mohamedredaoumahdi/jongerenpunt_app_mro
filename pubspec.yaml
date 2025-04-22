@@ -1,0 +1,61 @@
+name: jongerenpunt_app
+description: A mobile app for young people to find information and resources.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.18.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Firebase
+  firebase_core: ^2.15.0
+  firebase_auth: ^4.7.2
+  cloud_firestore: ^4.8.4
+  firebase_messaging: ^14.6.5
+  firebase_crashlytics: ^3.3.4
+  
+  # State management
+  provider: ^6.0.5
+  
+  # UI components
+  cupertino_icons: ^1.0.5
+  flutter_svg: ^2.0.7
+  cached_network_image: ^3.2.3
+  shimmer: ^3.0.0
+  
+  # Utilities
+  http: ^1.1.0
+  url_launcher: ^6.1.12
+  shared_preferences: ^2.2.0
+  intl: ^0.18.1
+  
+  # For AI chat (optional)
+  dart_openai: ^4.0.0
+  chat_gpt_sdk: ^2.2.5
+  flutter_local_notifications: ^19.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.2
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    
+  fonts:
+    - family: GlacialIndifference
+      fonts:
+        - asset: assets/fonts/GlacialIndifference-Regular.otf
+        - asset: assets/fonts/GlacialIndifference-Bold.otf
+          weight: 700
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
