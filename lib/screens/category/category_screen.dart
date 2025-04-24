@@ -142,7 +142,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   color: AppColors.primaryStart.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.article,
                   color: AppColors.primaryStart,
                 ),

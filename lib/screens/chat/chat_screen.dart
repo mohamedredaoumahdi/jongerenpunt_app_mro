@@ -208,7 +208,7 @@ class _ChatScreenState extends State<ChatScreen> {
   
   Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.isUser;
-    final showTimestamp = true; // Could be a setting
+    const showTimestamp = true; // Could be a setting
     
     final formattedTime = DateFormat('HH:mm').format(message.timestamp);
     
@@ -219,10 +219,10 @@ class _ChatScreenState extends State<ChatScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            CircleAvatar(
+            const CircleAvatar(
               backgroundColor: AppColors.primaryStart,
               radius: 16,
-              child: const Icon(
+              child: Icon(
                 Icons.smart_toy,
                 size: 18,
                 color: Colors.white,

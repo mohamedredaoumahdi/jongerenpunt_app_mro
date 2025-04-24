@@ -35,8 +35,40 @@ target 'Runner' do
   end
 end
 
+# Fix for gRPC module map issues
+pre_install do |installer|
+  # workaround for gRPC-Core modulemap issue
+  installer.pod_targets.each do |pod|
+    if pod.name.eql?('gRPC-Core') || pod.name.eql?('gRPC-C++')
+      def pod.build_type;
+        # Force the build type to static for these libraries
+        Pod::BuildType.static_library
+      end
+    end
+  end
+end
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    
+    # Add these specific settings for iOS compatibility
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      
+      # Exclude arm64 architecture for simulator builds to prevent errors
+      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+      
+      # gRPC-specific preprocessor definitions
+      if target.name.include?('gRPC') || target.name.include?('grpc')
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+          '$(inherited)',
+          'GPB_USE_PROTOBUF_FRAMEWORK_IMPORTS=1',
+          'PB_FIELD_32BIT=1',
+          'PB_NO_PACKED_STRUCTS=1',
+          'PB_ENABLE_MALLOC=1',
+        ]
+      end
+    end
   end
 end

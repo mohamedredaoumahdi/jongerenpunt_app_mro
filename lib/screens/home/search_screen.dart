@@ -200,7 +200,7 @@ class _SearchScreenState extends State<SearchScreen> {
             color: AppColors.primaryStart.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
+          child: const Icon(
             Icons.category,
             color: AppColors.primaryStart,
           ),
@@ -231,7 +231,7 @@ class _SearchScreenState extends State<SearchScreen> {
             color: AppColors.primaryStart.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
+          child: const Icon(
             Icons.article,
             color: AppColors.primaryStart,
           ),

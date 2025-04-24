@@ -28,7 +28,7 @@ class AuthService with ChangeNotifier {
       
       notifyListeners();
       return user;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       rethrow;
     }
   }
@@ -43,7 +43,7 @@ class AuthService with ChangeNotifier {
       
       notifyListeners();
       return result.user;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       rethrow;
     }
   }
@@ -61,7 +61,7 @@ class AuthService with ChangeNotifier {
       
       notifyListeners();
       return user;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       rethrow;
     }
   }
@@ -95,7 +95,7 @@ class AuthService with ChangeNotifier {
       
       notifyListeners();
       return result.user;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       rethrow;
     }
   }

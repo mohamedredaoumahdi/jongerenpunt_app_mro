@@ -101,29 +101,29 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         
         // Welcome message
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Welkom bij Jongerenpunt',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'Vind informatie over alles wat voor jou belangrijk is',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.lightText,
                   ),
                 ),
-                const SizedBox(height: 24),
-                const Text(
+                SizedBox(height: 24),
+                Text(
                   'Categorieën',
                   style: TextStyle(
                     fontSize: 20,
