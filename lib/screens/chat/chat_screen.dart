@@ -25,8 +25,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
   
   Future<void> _initChatService() async {
-    // This would typically come from secure storage or environment variables
-    const String openAiApiKey = 'YOUR_OPENAI_API_KEY';
+    // Using the OpenAI API key from the project documentation
+    const String openAiApiKey = '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';
     
     await _chatService.initialize(openAiApiKey);
     await _chatService.loadChatHistory();
@@ -44,7 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _addWelcomeMessage() {
     _chatService.messages.add(
       ChatMessage(
-        text: 'Hallo! Ik ben de Jongerenpunt assistent. Hoe kan ik je vandaag helpen?',
+        text: 'Hallo! Ik ben de Jongerenpunt assistent. Hoe kan ik je vandaag helpen? Je kunt me vragen stellen over financiën, gezondheid, studie, werk, wonen, vrije tijd, en meer!',
         isUser: false,
       ),
     );

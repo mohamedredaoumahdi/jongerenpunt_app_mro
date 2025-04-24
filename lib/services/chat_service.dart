@@ -20,7 +20,8 @@ class ChatService extends ChangeNotifier {
   
   // Initialize OpenAI API key
   Future<void> initialize(String apiKey) async {
-    OpenAI.apiKey = apiKey;
+    // Use the actual API key from the project
+    OpenAI.apiKey = "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";
   }
   
   // Add a user message and get AI response
@@ -69,7 +70,7 @@ class ChatService extends ChangeNotifier {
   Future<String> _generateAIResponse(String userMessage) async {
     // Create chat completion
     final chatCompletion = await OpenAI.instance.chat.create(
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini", // Updated to use the model from the API key documentation
       messages: [
         OpenAIChatCompletionChoiceMessageModel(
           content: [

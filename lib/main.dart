@@ -1,8 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:jongerenpunt_app/firebase_options.dart';
 import 'package:jongerenpunt_app/screens/splash/splash_screen.dart';
-import 'package:jongerenpunt_app/services/firebase_options.dart';
 import 'package:jongerenpunt_app/constants/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
