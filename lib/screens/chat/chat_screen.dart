@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jongerenpunt_app/constants/app_theme.dart';
 import 'package:jongerenpunt_app/services/chat_service.dart';
-import 'package:provider/provider.dart';
-import 'package:jongerenpunt_app/services/auth_service.dart';
 import 'package:intl/intl.dart';
 
 class ChatScreen extends StatefulWidget {
