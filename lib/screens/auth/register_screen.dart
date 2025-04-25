@@ -3,6 +3,7 @@ import 'package:jongerenpunt_app/constants/app_theme.dart';
 import 'package:jongerenpunt_app/screens/home/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
+import 'package:flutter/foundation.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -38,14 +39,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       
-      if (authService.isAnonymous) {
-        // Convert anonymous account to permanent account
+      // Get current user state before trying to modify it
+      final isAnonymous = authService.isAnonymous;
+      final isAuthenticated = authService.isAuthenticated;
+      
+      if (kDebugMode) {
+        print('Current auth state - isAnonymous: $isAnonymous, isAuthenticated: $isAuthenticated');
+      }
+      
+      if (isAuthenticated && isAnonymous) {
+        // User is logged in anonymously, convert to permanent account
+        if (kDebugMode) {
+          print('Converting anonymous account to permanent');
+        }
+        
         await authService.convertAnonymousUserWithEmailAndPassword(
           _emailController.text.trim(),
           _passwordController.text,
         );
       } else {
         // Create new account
+        if (kDebugMode) {
+          print('Creating new account');
+        }
+        
         await authService.registerWithEmailAndPassword(
           _emailController.text.trim(),
           _passwordController.text,
@@ -59,6 +76,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } catch (e) {
+      if (kDebugMode) {
+        print('Registration error: $e');
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -76,9 +97,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if user is anonymous to show appropriate title
+    final authService = Provider.of<AuthService>(context);
+    final isAnonymous = authService.isAnonymous && authService.isAuthenticated;
+    
+    final String titleText = isAnonymous 
+        ? 'Maak een account aan'
+        : 'Maak een nieuw account';
+        
+    final String buttonText = isAnonymous 
+        ? 'Account aanmaken'
+        : 'Registreren';
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registreren'),
+        title: Text(isAnonymous ? 'Account aanmaken' : 'Registreren'),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -98,9 +131,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Title
-                    const Text(
-                      'Maak een nieuw account',
-                      style: TextStyle(
+                    Text(
+                      titleText,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -214,7 +247,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   strokeWidth: 2.0,
                                 ),
                               )
-                            : const Text('Registreren'),
+                            : Text(buttonText),
                       ),
                     ),
                     

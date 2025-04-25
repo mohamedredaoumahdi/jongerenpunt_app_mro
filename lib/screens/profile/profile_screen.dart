@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:jongerenpunt_app/constants/app_theme.dart';
 import 'package:jongerenpunt_app/screens/auth/auth_screen.dart';
+import 'package:jongerenpunt_app/screens/auth/register_screen.dart';
 import 'package:jongerenpunt_app/screens/profile/settings_screen.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
 import 'package:jongerenpunt_app/services/notification_service.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -66,16 +68,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ) ?? false;
     
     if (confirmed) {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.signOut();
-      
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const AuthScreen()),
-          (route) => false,
-        );
+      try {
+        final authService = Provider.of<AuthService>(context, listen: false);
+        await authService.signOut();
+        
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const AuthScreen()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error during logout: $e');
+        }
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Uitloggen mislukt: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
+  }
+
+  void _navigateToCreateAccount() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const RegisterScreen(),
+      ),
+    );
   }
 
   @override
@@ -83,6 +108,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authService = Provider.of<AuthService>(context);
     final isAnonymous = authService.isAnonymous;
     final user = authService.currentUser;
+    
+    if (kDebugMode) {
+      print('Profile screen - User: ${user?.uid}, isAnonymous: $isAnonymous');
+    }
     
     return Scaffold(
       appBar: AppBar(
@@ -131,10 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (isAnonymous) ...[
                     const SizedBox(height: 8),
                     ElevatedButton(
-                      onPressed: () {
-                        // Navigate to registration screen for anonymous users to convert account
-                        // This would need to be implemented
-                      },
+                      onPressed: _navigateToCreateAccount,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryStart,
                         foregroundColor: Colors.white,

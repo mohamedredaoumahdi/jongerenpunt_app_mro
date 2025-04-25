@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jongerenpunt_app/constants/app_theme.dart';
-import 'package:jongerenpunt_app/models/category.dart';
+import 'package:jongerenpunt_app/constants/category_helper.dart';
+import 'package:jongerenpunt_app/models/category.dart' as categorys;
+import 'package:flutter/foundation.dart';
 
 class CategoryCard extends StatelessWidget {
-  final Category category;
+  final categorys.Category category;
   final VoidCallback onTap;
 
   const CategoryCard({
@@ -38,22 +40,9 @@ class CategoryCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16.0),
             child: Stack(
               children: [
-                // Category image
+                // Category image - Using a fallback image or color if image fails to load
                 Positioned.fill(
-                  child: CachedNetworkImage(
-                    imageUrl: category.image,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.error),
-                    ),
-                    fit: BoxFit.cover,
-                  ),
+                  child: _buildCategoryImage(category),
                 ),
                 
                 // Gradient overlay
@@ -105,7 +94,7 @@ class CategoryCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      _getIconData(category.icon),
+                      CategoryHelper.getCategoryIconData(category.icon),
                       color: Colors.white,
                       size: 20,
                     ),
@@ -119,35 +108,74 @@ class CategoryCard extends StatelessWidget {
     );
   }
   
-  IconData _getIconData(String iconName) {
-    // Map icon string names from Firestore to Flutter IconData
-    switch (iconName) {
-      case 'money':
-        return Icons.attach_money;
-      case 'health':
-        return Icons.favorite;
-      case 'school':
-        return Icons.school;
-      case 'leisure':
-        return Icons.sports_soccer;
-      case 'work':
-        return Icons.work;
-      case 'housing':
-        return Icons.home;
-      case 'legal':
-        return Icons.gavel;
-      case 'business':
-        return Icons.business;
-      case 'safety':
-        return Icons.security;
-      case 'discrimination':
-        return Icons.pan_tool;
-      case 'general':
-        return Icons.info;
-      case 'turning18':
-        return Icons.cake;
-      default:
-        return Icons.category;
+  Widget _buildCategoryImage( categorys.Category category) {
+    // Using a replacement color and icon for fallback
+    Color fallbackColor = CategoryHelper.getCategoryFallbackColor(category.title);
+    
+    // If the image URL is empty, directly use the fallback
+    if (category.image.isEmpty) {
+      return Container(
+        color: fallbackColor,
+        child: Center(
+          child: Icon(
+            CategoryHelper.getCategoryIconData(category.icon),
+            color: Colors.white.withOpacity(0.2),
+            size: 48,
+          ),
+        ),
+      );
     }
+    
+    // Try to use the original URL first
+    return CachedNetworkImage(
+      imageUrl: category.image,
+      placeholder: (context, url) => Container(
+        color: Colors.grey[200],
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      errorWidget: (context, url, error) {
+        if (kDebugMode) {
+          print('Error loading image for category ${category.title}: $error');
+        }
+        
+        // Try using a placeholder image if the original fails
+        String placeholderUrl = CategoryHelper.getCategoryPlaceholderImage(category.id);
+        
+        return CachedNetworkImage(
+          imageUrl: placeholderUrl,
+          placeholder: (context, url) => Container(
+            color: fallbackColor,
+            child: Center(
+              child: Icon(
+                CategoryHelper.getCategoryIconData(category.icon),
+                color: Colors.white.withOpacity(0.2),
+                size: 48,
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) {
+            // If both image sources fail, use a colored fallback
+            if (kDebugMode) {
+              print('Error loading placeholder image for category ${category.title}: $error');
+            }
+            
+            return Container(
+              color: fallbackColor,
+              child: Center(
+                child: Icon(
+                  CategoryHelper.getCategoryIconData(category.icon),
+                  color: Colors.white.withOpacity(0.2),
+                  size: 48,
+                ),
+              ),
+            );
+          },
+          fit: BoxFit.cover,
+        );
+      },
+      fit: BoxFit.cover,
+    );
   }
 }

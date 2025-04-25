@@ -5,6 +5,7 @@ import 'package:jongerenpunt_app/screens/auth/register_screen.dart';
 import 'package:jongerenpunt_app/screens/home/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
@@ -22,8 +23,16 @@ class _AuthScreenState extends State<AuthScreen> {
     });
     
     try {
+      if (kDebugMode) {
+        print('Attempting to sign in anonymously');
+      }
+      
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.signInAnonymously();
+      
+      if (kDebugMode) {
+        print('Anonymous sign in successful');
+      }
       
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -31,10 +40,14 @@ class _AuthScreenState extends State<AuthScreen> {
         );
       }
     } catch (e) {
+      if (kDebugMode) {
+        print('Error signing in anonymously: $e');
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text('Fout bij anoniem inloggen: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -48,6 +61,36 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+    
+    // If user is already authenticated, redirect to home screen
+    if (authService.isAuthenticated) {
+      if (kDebugMode) {
+        print('User already authenticated, redirecting to home screen');
+      }
+      
+      // Use Future.microtask to avoid build-phase navigation
+      Future.microtask(() {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      });
+      
+      // Return a loading screen while redirecting
+      return Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        ),
+      );
+    }
+    
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -64,6 +107,25 @@ class _AuthScreenState extends State<AuthScreen> {
                   'assets/images/logo.png',
                   width: 120,
                   height: 120,
+                  errorBuilder: (context, error, stackTrace) {
+                    if (kDebugMode) {
+                      print('Error loading logo: $error');
+                    }
+                    // Fallback if logo image is missing
+                    return Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.people,
+                        size: 60,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
                 ),
                 
                 const SizedBox(height: 32),

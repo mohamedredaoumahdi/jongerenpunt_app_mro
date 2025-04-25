@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jongerenpunt_app/constants/app_theme.dart';
 import 'package:jongerenpunt_app/services/chat_service.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -23,18 +24,27 @@ class _ChatScreenState extends State<ChatScreen> {
   }
   
   Future<void> _initChatService() async {
-    // Using the OpenAI API key from the project documentation
-    const String openAiApiKey = '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';
-    
-    await _chatService.initialize(openAiApiKey);
-    await _chatService.loadChatHistory();
-    
-    setState(() {
-      _isInitialized = true;
-    });
-    
-    // Add welcome message if chat is empty
-    if (_chatService.messages.isEmpty) {
+    try {
+      await _chatService.loadChatHistory();
+      
+      setState(() {
+        _isInitialized = true;
+      });
+      
+      // Add welcome message if chat is empty
+      if (_chatService.messages.isEmpty) {
+        _addWelcomeMessage();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error initializing chat service: $e');
+      }
+      
+      // Initialize even if loading fails
+      setState(() {
+        _isInitialized = true;
+      });
+      
       _addWelcomeMessage();
     }
   }
@@ -46,6 +56,8 @@ class _ChatScreenState extends State<ChatScreen> {
         isUser: false,
       ),
     );
+    
+    _chatService.notifyListeners();
   }
   
   @override
