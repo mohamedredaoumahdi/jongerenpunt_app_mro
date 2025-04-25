@@ -48,17 +48,11 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        String errorMessage = 'Inloggen mislukt';
-        
-        if (e.toString().contains('user-not-found') || 
-            e.toString().contains('wrong-password')) {
-          errorMessage = 'Ongeldige e-mail of wachtwoord';
-        } else if (e.toString().contains('too-many-requests')) {
-          errorMessage = 'Te veel inlogpogingen, probeer het later opnieuw';
-        }
-        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {

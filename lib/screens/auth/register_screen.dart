@@ -60,23 +60,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
-        String errorMessage = 'Registreren mislukt';
-        
-        if (e.toString().contains('email-already-in-use')) {
-          errorMessage = 'Dit e-mailadres is al in gebruik';
-        } else if (e.toString().contains('weak-password')) {
-          errorMessage = 'Dit wachtwoord is te zwak';
-        } else if (e.toString().contains('invalid-email')) {
-          errorMessage = 'Ongeldig e-mailadres';
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.error,
+          ),
+        );
         
         setState(() {
           _isLoading = false;
         });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
       }
     }
   }
