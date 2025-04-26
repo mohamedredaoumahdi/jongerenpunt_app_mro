@@ -76,6 +76,26 @@ class SubcategoryDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Use a regular AppBar instead of SliverAppBar to save space
+      appBar: AppBar(
+        title: Text(
+          subcategory.title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppColors.primaryStart,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () => _shareContent(context, subcategory),
+            tooltip: 'Delen',
+          ),
+        ],
+      ),
       body: FutureBuilder<Subcategory>(
         future: _firestoreService.getSubcategoryById(subcategory.id),
         builder: (context, snapshot) {
@@ -93,241 +113,206 @@ class SubcategoryDetailScreen extends StatelessWidget {
           
           final subcategoryData = snapshot.data!;
           
-          return CustomScrollView(
-            slivers: [
-              // App Bar
-              SliverAppBar(
-                pinned: true,
-                expandedHeight: 120,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    subcategoryData.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Main content card
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Subtitle
+                        const Text(
+                          'Informatie',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryStart,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Description
+                        if (subcategoryData.description != null)
+                          Text(
+                            subcategoryData.description!,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.share),
-                    onPressed: () => _shareContent(context, subcategoryData),
-                    tooltip: 'Delen',
+                
+                const SizedBox(height: 16),
+                
+                // Warning section
+                if (subcategoryData.letOp != null && subcategoryData.letOp!.isNotEmpty)
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    color: AppColors.warning.withOpacity(0.05),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                color: AppColors.warning,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Let op',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.warning,
+                                ),
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 12),
+                          
+                          Text(
+                            subcategoryData.letOp!,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                ],
-              ),
-              
-              // Content
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
+                
+                const SizedBox(height: 24),
+                
+                // Related links section
+                if (subcategoryData.ctaText != null && subcategoryData.ctaUrl != null)
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Main content card
+                      const Text(
+                        'Nuttige links',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Link card
                       Card(
                         elevation: 2,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Subtitle
-                              const Text(
-                                'Informatie',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryStart,
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 12),
-                              
-                              // Description
-                              if (subcategoryData.description != null)
-                                Text(
-                                  subcategoryData.description!,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    height: 1.5,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Warning section
-                      if (subcategoryData.letOp != null && subcategoryData.letOp!.isNotEmpty)
-                        Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          color: AppColors.warning.withOpacity(0.05),
+                        child: InkWell(
+                          onTap: () => _launchURL(context, subcategoryData.ctaUrl!),
+                          borderRadius: BorderRadius.circular(12),
                           child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
                               children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.warning_amber_rounded,
-                                      color: AppColors.warning,
-                                      size: 24,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'Let op',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.warning,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                
-                                const SizedBox(height: 12),
-                                
-                                Text(
-                                  subcategoryData.letOp!,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    height: 1.5,
+                                Container(
+                                  width: 42,
+                                  height: 42,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent.withOpacity(0.1),
+                                    shape: BoxShape.circle,
                                   ),
+                                  child: const Icon(
+                                    Icons.link,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        subcategoryData.ctaText!,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        subcategoryData.ctaUrl!,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: AppColors.lightText,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.open_in_new,
+                                  color: AppColors.accent,
                                 ),
                               ],
                             ),
                           ),
                         ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Related links section
-                      if (subcategoryData.ctaText != null && subcategoryData.ctaUrl != null)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Nuttige links',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 12),
-                            
-                            // Link card
-                            Card(
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: InkWell(
-                                onTap: () => _launchURL(context, subcategoryData.ctaUrl!),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 42,
-                                        height: 42,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.accent.withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.link,
-                                          color: AppColors.accent,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              subcategoryData.ctaText!,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              subcategoryData.ctaUrl!,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: AppColors.lightText,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.open_in_new,
-                                        color: AppColors.accent,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Call to action button
-                      if (subcategoryData.ctaText != null && subcategoryData.ctaUrl != null)
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () => _launchURL(context, subcategoryData.ctaUrl!),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryStart,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 2,
-                            ),
-                            child: Text(
-                              subcategoryData.ctaText!,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      
-                      // Bottom spacing
-                      const SizedBox(height: 40),
+                      ),
                     ],
                   ),
-                ),
-              ),
-            ],
+                
+                const SizedBox(height: 24),
+                
+                // Call to action button
+                if (subcategoryData.ctaText != null && subcategoryData.ctaUrl != null)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _launchURL(context, subcategoryData.ctaUrl!),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryStart,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Text(
+                        subcategoryData.ctaText!,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                
+                // Bottom spacing
+                const SizedBox(height: 40),
+              ],
+            ),
           );
         },
       ),

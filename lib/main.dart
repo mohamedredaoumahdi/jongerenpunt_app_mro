@@ -2,12 +2,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:jongerenpunt_app/firebase_options.dart';
+import 'package:jongerenpunt_app/screens/auth/register_screen.dart';
 import 'package:jongerenpunt_app/screens/splash/splash_screen.dart';
 import 'package:jongerenpunt_app/constants/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
 import 'package:jongerenpunt_app/services/notification_service.dart';
 import 'package:flutter/foundation.dart';
+
+// Import SettingsProvider from settings_screen.dart
+// Note: You'll need to extract the SettingsProvider to a separate file
+// For now, this assumes you've moved it to lib/services/settings_service.dart
+import 'package:jongerenpunt_app/services/settings_service.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -49,6 +55,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
       child: const JongerenpuntApp(),
     ),
@@ -60,11 +67,23 @@ class JongerenpuntApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    
+    // Load settings when app starts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      settingsProvider.loadSettings();
+    });
+    
     return MaterialApp(
       title: 'Jongerenpunt',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: settingsProvider.isDarkModeEnabled 
+          ? AppTheme.darkTheme  // You'll need to implement this
+          : AppTheme.lightTheme,
       home: const SplashScreen(),
+      routes: {
+        '/register': (context) => const RegisterScreen(), // Create this import
+      },
       builder: (context, child) {
         // This ensures error handling at the UI level
         ErrorWidget.builder = (FlutterErrorDetails details) {
