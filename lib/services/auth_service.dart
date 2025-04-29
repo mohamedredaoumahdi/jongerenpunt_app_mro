@@ -329,20 +329,46 @@ class AuthService with ChangeNotifier {
   }
   
   // Update user profile data
+  // Update user profile with better error handling and more fields
   Future<void> updateUserProfile(Map<String, dynamic> profileData) async {
     try {
-      if (currentUser != null) {
-        await _firestore.collection('users').doc(currentUser!.uid).update({
-          'profileData': profileData,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        notifyListeners();
+      if (currentUser == null) {
+        throw Exception('Je bent niet ingelogd');
+      }
+      
+      // Validate data
+      if (profileData.containsKey('username') && (profileData['username'] == null || profileData['username'].isEmpty)) {
+        throw Exception('Gebruikersnaam mag niet leeg zijn');
+      }
+      
+      // Get current profile data first
+      DocumentSnapshot doc = await _firestore.collection('users').doc(currentUser!.uid).get();
+      Map<String, dynamic> userData = doc.data() as Map<String, dynamic>;
+      Map<String, dynamic> currentProfileData = userData.containsKey('profileData') ? 
+          (userData['profileData'] as Map<String, dynamic>) : {};
+          
+      // Merge new profile data with existing data
+      Map<String, dynamic> updatedProfileData = {
+        ...currentProfileData,
+        ...profileData,
+      };
+      
+      // Update the user document
+      await _firestore.collection('users').doc(currentUser!.uid).update({
+        'profileData': updatedProfileData,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      notifyListeners();
+      
+      if (kDebugMode) {
+        print('User profile updated successfully');
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error updating user profile: $e');
       }
-      throw 'Profiel bijwerken mislukt. Controleer je internetverbinding en probeer het opnieuw.';
+      throw Exception('Fout bij het bijwerken van je profiel: ${e.toString()}');
     }
   }
   
@@ -448,6 +474,145 @@ class AuthService with ChangeNotifier {
         print('Error checking if email is in use: $e');
       }
       return false; // Default to false on error to allow registration attempt
+    }
+  }
+
+  // These methods should be added to the AuthService class in lib/services/auth_service.dart
+
+  // Get user profile data
+  Future<Map<String, dynamic>> getUserProfile() async {
+    try {
+      if (currentUser == null) {
+        throw Exception('Je bent niet ingelogd');
+      }
+      
+      DocumentSnapshot doc = await _firestore.collection('users').doc(currentUser!.uid).get();
+      
+      if (!doc.exists) {
+        // Create default profile if it doesn't exist
+        await _createUserDocument(currentUser!, isAnonymous: currentUser!.isAnonymous);
+        doc = await _firestore.collection('users').doc(currentUser!.uid).get();
+      }
+      
+      Map<String, dynamic> userData = doc.data() as Map<String, dynamic>;
+      
+      // Ensure profileData exists
+      if (!userData.containsKey('profileData') || userData['profileData'] == null) {
+        userData['profileData'] = {
+          'username': currentUser!.email?.split('@').first ?? 'Gebruiker',
+          'favoriteCategories': [],
+          'interests': [],
+          'bio': '',
+          'profileImage': null,
+        };
+        
+        // Update user document with default profile data
+        await _firestore.collection('users').doc(currentUser!.uid).update({
+          'profileData': userData['profileData'],
+        });
+      }
+      
+      // Return profile data with defaults for missing fields
+      Map<String, dynamic> profileData = userData['profileData'] as Map<String, dynamic>;
+      
+      return {
+        'username': profileData['username'] ?? currentUser!.email?.split('@').first ?? 'Gebruiker',
+        'favoriteCategories': List<String>.from(profileData['favoriteCategories'] ?? []),
+        'interests': List<String>.from(profileData['interests'] ?? []),
+        'bio': profileData['bio'] ?? '',
+        'profileImage': profileData['profileImage'],
+        'email': currentUser!.email,
+        'isAnonymous': currentUser!.isAnonymous,
+        'createdAt': userData['createdAt'],
+      };
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting user profile: $e');
+      }
+      throw Exception('Fout bij het ophalen van je profiel: ${e.toString()}');
+    }
+  }
+  
+  
+  
+  // Get user favorite categories
+  Future<List<String>> getFavoriteCategories() async {
+    try {
+      if (currentUser == null) {
+        return [];
+      }
+      
+      DocumentSnapshot doc = await _firestore.collection('users').doc(currentUser!.uid).get();
+      
+      if (!doc.exists) {
+        return [];
+      }
+      
+      Map<String, dynamic> userData = doc.data() as Map<String, dynamic>;
+      
+      if (!userData.containsKey('profileData') || 
+          !(userData['profileData'] is Map) || 
+          !userData['profileData'].containsKey('favoriteCategories')) {
+        return [];
+      }
+      
+      return List<String>.from(userData['profileData']['favoriteCategories']);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting favorite categories: $e');
+      }
+      return [];
+    }
+  }
+  
+  // Toggle favorite category
+  Future<void> toggleFavoriteCategory(String categoryId) async {
+    try {
+      if (currentUser == null) {
+        throw Exception('Je bent niet ingelogd');
+      }
+      
+      // Get current favorites
+      List<String> favorites = await getFavoriteCategories();
+      
+      // Toggle category
+      if (favorites.contains(categoryId)) {
+        favorites.remove(categoryId);
+      } else {
+        favorites.add(categoryId);
+      }
+      
+      // Update in Firestore
+      await _firestore.collection('users').doc(currentUser!.uid).update({
+        'profileData.favoriteCategories': favorites,
+      });
+      
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error toggling favorite category: $e');
+      }
+      throw Exception('Fout bij het bijwerken van je favorieten: ${e.toString()}');
+    }
+  }
+  
+  // Update user interests
+  Future<void> updateUserInterests(List<String> interests) async {
+    try {
+      if (currentUser == null) {
+        throw Exception('Je bent niet ingelogd');
+      }
+      
+      await _firestore.collection('users').doc(currentUser!.uid).update({
+        'profileData.interests': interests,
+      });
+      
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating user interests: $e');
+      }
+      throw Exception('Fout bij het bijwerken van je interesses: ${e.toString()}');
     }
   }
 }

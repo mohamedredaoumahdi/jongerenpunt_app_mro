@@ -3,8 +3,13 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:jongerenpunt_app/firebase_options.dart';
 import 'package:jongerenpunt_app/screens/auth/register_screen.dart';
+import 'package:jongerenpunt_app/screens/help/contact_screen.dart';
+import 'package:jongerenpunt_app/screens/help/faq_screen.dart';
+import 'package:jongerenpunt_app/screens/profile/edit_profile_screen.dart';
 import 'package:jongerenpunt_app/screens/splash/splash_screen.dart';
 import 'package:jongerenpunt_app/constants/app_theme.dart';
+import 'package:jongerenpunt_app/services/contact_service.dart';
+import 'package:jongerenpunt_app/services/storage_service.dart';
 import 'package:provider/provider.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
 import 'package:jongerenpunt_app/services/notification_service.dart';
@@ -54,6 +59,8 @@ void main() async {
         ChangeNotifierProvider<AuthService>(create: (_) => AuthService()),
         ChangeNotifierProvider<SettingsProvider>(create: (_) => SettingsProvider()),
         ChangeNotifierProvider<ChatService>(create: (_) => ChatService()),
+        Provider<StorageService>(create: (_) => StorageService()),
+        Provider<ContactService>(create: (_) => ContactService()),
       ],
       child: const JongerenpuntApp(),
     ),
@@ -103,6 +110,9 @@ class _JongerenpuntAppState extends State<JongerenpuntApp> {
       home: const SplashScreen(),
       routes: {
         '/register': (context) => const RegisterScreen(),
+        '/edit_profile': (context) => const EditProfileScreen(),
+        '/faq': (context) => const FAQScreen(),
+        '/contact': (context) => const ContactScreen(),
       },
       builder: (context, child) {
         // This ensures error handling at the UI level

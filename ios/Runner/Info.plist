@@ -45,5 +45,59 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Camera permission for profile photo -->
+	<key>NSCameraUsageDescription</key>
+	<string>Deze app heeft toegang tot je camera nodig om een profielfoto te maken.</string>
+	
+	<!-- Photo library permission for profile photo -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Deze app heeft toegang tot je fotobibliotheek nodig om een profielfoto te selecteren.</string>
+	
+	<!-- Microphone permission (needed if you record videos) -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Deze app heeft toegang tot je microfoon nodig voor het opnemen van video's.</string>
+	
+	<!-- Location permission (if you need location features in the future) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Deze app heeft je locatie nodig om locatie-gebaseerde diensten aan te bieden.</string>
+	
+	<!-- Push notification permission -->
+	<key>NSUserNotificationUsageDescription</key>
+	<string>De app stuurt je meldingen over updates en nieuwe informatie.</string>
+	
+	<!-- URL schemes for launching other apps -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>mailto</string>
+		<string>tel</string>
+		<string>sms</string>
+		<string>https</string>
+		<string>http</string>
+	</array>
+	
+	<!-- Background modes for notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	
+	<!-- App Transport Security settings to allow API connections -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>jongerenpunt.nl</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
 </dict>
 </plist>
