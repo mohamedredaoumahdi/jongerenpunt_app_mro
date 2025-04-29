@@ -9,11 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
 import 'package:jongerenpunt_app/services/notification_service.dart';
 import 'package:flutter/foundation.dart';
-
-// Import SettingsProvider from settings_screen.dart
-// Note: You'll need to extract the SettingsProvider to a separate file
-// For now, this assumes you've moved it to lib/services/settings_service.dart
 import 'package:jongerenpunt_app/services/settings_service.dart';
+import 'package:jongerenpunt_app/services/chat_service.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -54,25 +51,48 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider<AuthService>(create: (_) => AuthService()),
+        ChangeNotifierProvider<SettingsProvider>(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider<ChatService>(create: (_) => ChatService()),
       ],
       child: const JongerenpuntApp(),
     ),
   );
 }
 
-class JongerenpuntApp extends StatelessWidget {
+class JongerenpuntApp extends StatefulWidget {
   const JongerenpuntApp({Key? key}) : super(key: key);
+
+  @override
+  State<JongerenpuntApp> createState() => _JongerenpuntAppState();
+}
+
+class _JongerenpuntAppState extends State<JongerenpuntApp> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+  }
+  
+  Future<void> _initializeServices() async {
+    try {
+      // Load settings when app starts
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      await settingsProvider.loadSettings();
+      
+      // Initialize chat service
+      final chatService = Provider.of<ChatService>(context, listen: false);
+      await chatService.loadChatHistory();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error initializing services: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
-    
-    // Load settings when app starts
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      settingsProvider.loadSettings();
-    });
     
     return MaterialApp(
       title: 'Jongerenpunt',
@@ -82,7 +102,7 @@ class JongerenpuntApp extends StatelessWidget {
           : AppTheme.lightTheme,
       home: const SplashScreen(),
       routes: {
-        '/register': (context) => const RegisterScreen(), // Create this import
+        '/register': (context) => const RegisterScreen(),
       },
       builder: (context, child) {
         // This ensures error handling at the UI level

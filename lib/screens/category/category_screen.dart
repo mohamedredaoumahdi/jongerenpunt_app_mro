@@ -7,6 +7,7 @@ import 'package:jongerenpunt_app/screens/category/subcategory_detail_screen.dart
 import 'package:jongerenpunt_app/services/firestore_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CategoryScreen extends StatefulWidget {
   final ctegories.Category category;
@@ -26,6 +27,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
   List<Subcategory> _allSubcategories = [];
   List<Subcategory> _filteredSubcategories = [];
   bool _isSearching = false;
+  bool _isLoading = true;
+  String? _errorMessage;
   
   // Track if we've already logged image errors to prevent repeats
   bool _hasLoggedImageError = false;
@@ -34,6 +37,81 @@ class _CategoryScreenState extends State<CategoryScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_filterSubcategories);
+    
+    // Fetch subcategories when screen initializes
+    _fetchSubcategories();
+  }
+  
+  Future<void> _fetchSubcategories() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    
+    try {
+      // Debug info
+      if (kDebugMode) {
+        print('Fetching subcategories for category ID: ${widget.category.id}');
+      }
+      
+      // Check if category ID is valid
+      if (widget.category.id.isEmpty) {
+        throw Exception('Category ID is empty');
+      }
+      
+      // Direct Firestore query - more reliable than stream for troubleshooting
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('subcategories')
+          .where('categoryId', isEqualTo: widget.category.id)
+          .get();
+      
+      if (!mounted) return;
+      
+      // Process results
+      if (snapshot.docs.isEmpty) {
+        if (kDebugMode) {
+          print('No subcategories found for category: ${widget.category.id}');
+        }
+        
+        setState(() {
+          _allSubcategories = [];
+          _filteredSubcategories = [];
+          _isLoading = false;
+        });
+      } else {
+        // Convert to subcategory objects
+        final subcategories = snapshot.docs
+            .map((doc) => Subcategory.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+            .toList();
+        
+        if (kDebugMode) {
+          print('Found ${subcategories.length} subcategories');
+          // Print first subcategory for debugging
+          if (subcategories.isNotEmpty) {
+            print('Sample subcategory: ${subcategories.first.title}, categoryId: ${subcategories.first.categoryId}');
+          }
+        }
+        
+        setState(() {
+          _allSubcategories = subcategories;
+          _filteredSubcategories = subcategories;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching subcategories: $e');
+      }
+      
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Er is een fout opgetreden bij het laden van de onderwerpen: $e';
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -44,6 +122,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   void _filterSubcategories() {
     final query = _searchController.text.toLowerCase();
+    
+    if (!mounted) return;
+    
     setState(() {
       if (query.isEmpty) {
         _filteredSubcategories = _allSubcategories;
@@ -57,6 +138,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
       }
     });
   }
+  
+  void _retryFetch() {
+    _fetchSubcategories();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +153,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             expandedHeight: 200.0,
             pinned: true,
             stretch: true,
-            iconTheme: const IconThemeData(color: Colors.white), // Set back button color to white
+            iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.category.title,
@@ -101,9 +186,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
             ),
           ),
           
-          // Rest of the screen content...
-          // [Rest of your existing code...]
-          
           // Search bar
           SliverToBoxAdapter(
             child: Padding(
@@ -132,87 +214,95 @@ class _CategoryScreenState extends State<CategoryScreen> {
             ),
           ),
           
-          // Subcategories list
-          StreamBuilder<List<Subcategory>>(
-            stream: _firestoreService.getSubcategoriesByCategory(widget.category.id),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              
-              if (snapshot.hasError) {
-                if (kDebugMode) {
-                  print('Error loading subcategories: ${snapshot.error}');
-                }
-                return SliverFillRemaining(
-                  child: Center(child: Text('Error: ${snapshot.error}')),
-                );
-              }
-              
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.category_outlined, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          'Geen subcategorieën gevonden',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
+          // Content based on state: loading, error, or subcategories
+          if (_isLoading) 
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_errorMessage != null)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
                     ),
-                  ),
-                );
-              }
-              
-              // Store all subcategories for filtering
-              _allSubcategories = snapshot.data!;
-              
-              // If we haven't explicitly filtered yet, show all
-              if (_filteredSubcategories.isEmpty && !_isSearching) {
-                _filteredSubcategories = _allSubcategories;
-              }
-              
-              // Show appropriate message when search returns no results
-              if (_isSearching && _filteredSubcategories.isEmpty) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.search_off, size: 64, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Geen resultaten voor "${_searchController.text}"',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                      child: Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                );
-              }
-              
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final subcategory = _filteredSubcategories[index];
-                    return _buildSubcategoryItem(subcategory);
-                  },
-                  childCount: _filteredSubcategories.length,
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: _retryFetch,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Opnieuw proberen'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryStart,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            )
+          else if (_allSubcategories.isEmpty)
+            const SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.category_outlined, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'Geen onderwerpen gevonden',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_isSearching && _filteredSubcategories.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Geen resultaten voor "${_searchController.text}"',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final subcategory = _filteredSubcategories[index];
+                  return _buildSubcategoryItem(subcategory);
+                },
+                childCount: _filteredSubcategories.length,
+              ),
+            ),
           
           // Bottom padding
           const SliverToBoxAdapter(
@@ -271,7 +361,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
   
   Widget _buildSubcategoryItem(Subcategory subcategory) {
-    // Your existing code for subcategory items
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
@@ -316,7 +405,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (subcategory.description != null)
+                    if (subcategory.description != null && subcategory.description!.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
@@ -380,7 +469,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
   
   IconData _getSubcategoryIcon(String title) {
-    // Your existing code for subcategory icons
     final lowerTitle = title.toLowerCase();
     
     if (lowerTitle.contains('geld') || lowerTitle.contains('financiën') || lowerTitle.contains('belasting')) {

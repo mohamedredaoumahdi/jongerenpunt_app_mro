@@ -39,6 +39,7 @@ class CategoryHelper {
   static String getCategoryPlaceholderImage(String categoryId) {
     // First normalize the category ID to handle inconsistencies
     final normalizedId = _normalizeId(categoryId);
+
     
     // Return placeholder from map or default if not found
     return _categoryPlaceholders[normalizedId] ?? _defaultPlaceholder;

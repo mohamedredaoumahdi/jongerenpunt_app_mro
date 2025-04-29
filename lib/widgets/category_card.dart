@@ -140,6 +140,7 @@ class CategoryCard extends StatelessWidget {
       ),
       errorWidget: (context, url, error) {
         // Only log the error once per URL
+        print('Image Load Error for $url: $error');
         if (!_loggedImageErrors.contains(url)) {
           if (kDebugMode) {
             print('Error loading image for category ${category.title}: $error - Will use fallback');

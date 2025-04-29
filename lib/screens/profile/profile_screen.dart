@@ -115,12 +115,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profiel'),
+        title: const Text('Profiel', style : TextStyle( color : Colors.white)),
         backgroundColor: AppColors.primaryStart,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
