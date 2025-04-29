@@ -9,6 +9,10 @@ class CategoryCard extends StatelessWidget {
   final categorys.Category category;
   final VoidCallback onTap;
 
+  // Static set to track which image errors have already been logged
+  // This prevents multiple logs for the same image URL
+  static final Set<String> _loggedImageErrors = <String>{};
+
   const CategoryCard({
     Key? key,
     required this.category,
@@ -40,9 +44,11 @@ class CategoryCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16.0),
             child: Stack(
               children: [
-                // Category image - Using a fallback image or color if image fails to load
+                // Use immediate fallback if we know image is problematic
                 Positioned.fill(
-                  child: _buildCategoryImage(category),
+                  child: _shouldUseDirectFallback(category.image)
+                      ? _buildFallbackContainer(category)
+                      : _buildCategoryImage(category),
                 ),
                 
                 // Gradient overlay
@@ -108,25 +114,22 @@ class CategoryCard extends StatelessWidget {
     );
   }
   
-  Widget _buildCategoryImage( categorys.Category category) {
-    // Using a replacement color and icon for fallback
-    Color fallbackColor = CategoryHelper.getCategoryFallbackColor(category.title);
-    
-    // If the image URL is empty, directly use the fallback
-    if (category.image.isEmpty) {
-      return Container(
-        color: fallbackColor,
-        child: Center(
-          child: Icon(
-            CategoryHelper.getCategoryIconData(category.icon),
-            color: Colors.white.withOpacity(0.2),
-            size: 48,
-          ),
-        ),
-      );
+  // Check if we should skip trying to load the image
+  bool _shouldUseDirectFallback(String imageUrl) {
+    // If image URL is empty, use fallback
+    if (imageUrl.isEmpty) {
+      return true;
     }
     
-    // Try to use the original URL first
+    // If we've already seen this error, use fallback immediately
+    if (_loggedImageErrors.contains(imageUrl)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  Widget _buildCategoryImage(categorys.Category category) {
     return CachedNetworkImage(
       imageUrl: category.image,
       placeholder: (context, url) => Container(
@@ -136,46 +139,33 @@ class CategoryCard extends StatelessWidget {
         ),
       ),
       errorWidget: (context, url, error) {
-        if (kDebugMode) {
-          print('Error loading image for category ${category.title}: $error');
+        // Only log the error once per URL
+        if (!_loggedImageErrors.contains(url)) {
+          if (kDebugMode) {
+            print('Error loading image for category ${category.title}: $error - Will use fallback');
+          }
+          _loggedImageErrors.add(url);
         }
         
-        // Try using a placeholder image if the original fails
-        String placeholderUrl = CategoryHelper.getCategoryPlaceholderImage(category.id);
-        
-        return CachedNetworkImage(
-          imageUrl: placeholderUrl,
-          placeholder: (context, url) => Container(
-            color: fallbackColor,
-            child: Center(
-              child: Icon(
-                CategoryHelper.getCategoryIconData(category.icon),
-                color: Colors.white.withOpacity(0.2),
-                size: 48,
-              ),
-            ),
-          ),
-          errorWidget: (context, url, error) {
-            // If both image sources fail, use a colored fallback
-            if (kDebugMode) {
-              print('Error loading placeholder image for category ${category.title}: $error');
-            }
-            
-            return Container(
-              color: fallbackColor,
-              child: Center(
-                child: Icon(
-                  CategoryHelper.getCategoryIconData(category.icon),
-                  color: Colors.white.withOpacity(0.2),
-                  size: 48,
-                ),
-              ),
-            );
-          },
-          fit: BoxFit.cover,
-        );
+        return _buildFallbackContainer(category);
       },
       fit: BoxFit.cover,
+    );
+  }
+
+  // Helper method to create a fallback container with consistent styling
+  Widget _buildFallbackContainer(categorys.Category category) {
+    Color fallbackColor = CategoryHelper.getCategoryFallbackColor(category.title);
+    
+    return Container(
+      color: fallbackColor,
+      child: Center(
+        child: Icon(
+          CategoryHelper.getCategoryIconData(category.icon),
+          color: Colors.white.withOpacity(0.3),
+          size: 48,
+        ),
+      ),
     );
   }
 }

@@ -26,6 +26,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
   List<Subcategory> _allSubcategories = [];
   List<Subcategory> _filteredSubcategories = [];
   bool _isSearching = false;
+  
+  // Track if we've already logged image errors to prevent repeats
+  bool _hasLoggedImageError = false;
 
   @override
   void initState() {
@@ -65,7 +68,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             expandedHeight: 200.0,
             pinned: true,
             stretch: true,
-            iconTheme: const IconThemeData(color: Colors.white),
+            iconTheme: const IconThemeData(color: Colors.white), // Set back button color to white
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.category.title,
@@ -97,6 +100,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ),
             ),
           ),
+          
+          // Rest of the screen content...
+          // [Rest of your existing code...]
           
           // Search bar
           SliverToBoxAdapter(
@@ -218,24 +224,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
   
   Widget _buildCategoryImage() {
-    // Using a replacement color and icon for fallback
+    // Fallback color based on category title
     Color fallbackColor = CategoryHelper.getCategoryFallbackColor(widget.category.title);
     
     // If the image URL is empty, directly use the fallback
     if (widget.category.image.isEmpty) {
-      return Container(
-        color: fallbackColor,
-        child: Center(
-          child: Icon(
-            CategoryHelper.getCategoryIconData(widget.category.icon),
-            color: Colors.white.withOpacity(0.2),
-            size: 64,
-          ),
-        ),
-      );
+      return _buildFallbackContainer(fallbackColor);
     }
     
-    // Try to use the original URL first
+    // Use CachedNetworkImage with improved error handling
     return CachedNetworkImage(
       imageUrl: widget.category.image,
       fit: BoxFit.cover,
@@ -246,49 +243,35 @@ class _CategoryScreenState extends State<CategoryScreen> {
         ),
       ),
       errorWidget: (context, url, error) {
-        if (kDebugMode) {
-          print('Error loading image for category ${widget.category.title}: $error');
+        // Log error only once per screen
+        if (!_hasLoggedImageError) {
+          if (kDebugMode) {
+            print('Error loading image for category ${widget.category.title}: $error - Will use fallback');
+          }
+          _hasLoggedImageError = true;
         }
         
-        // Try using a placeholder image if the original fails
-        String placeholderUrl = CategoryHelper.getCategoryPlaceholderImage(widget.category.id);
-        
-        return CachedNetworkImage(
-          imageUrl: placeholderUrl,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            color: fallbackColor,
-            child: Center(
-              child: Icon(
-                CategoryHelper.getCategoryIconData(widget.category.icon),
-                color: Colors.white.withOpacity(0.2),
-                size: 64,
-              ),
-            ),
-          ),
-          errorWidget: (context, url, error) {
-            // If both image sources fail, use a colored fallback
-            if (kDebugMode) {
-              print('Error loading placeholder image for category ${widget.category.title}: $error');
-            }
-            
-            return Container(
-              color: fallbackColor,
-              child: Center(
-                child: Icon(
-                  CategoryHelper.getCategoryIconData(widget.category.icon),
-                  color: Colors.white.withOpacity(0.2),
-                  size: 64,
-                ),
-              ),
-            );
-          },
-        );
+        return _buildFallbackContainer(fallbackColor);
       },
     );
   }
   
+  // Helper method for fallback container
+  Widget _buildFallbackContainer(Color backgroundColor) {
+    return Container(
+      color: backgroundColor,
+      child: Center(
+        child: Icon(
+          CategoryHelper.getCategoryIconData(widget.category.icon),
+          color: Colors.white.withOpacity(0.3),
+          size: 64,
+        ),
+      ),
+    );
+  }
+  
   Widget _buildSubcategoryItem(Subcategory subcategory) {
+    // Your existing code for subcategory items
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
@@ -397,7 +380,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
   
   IconData _getSubcategoryIcon(String title) {
-    // Map subcategory titles to appropriate icons
+    // Your existing code for subcategory icons
     final lowerTitle = title.toLowerCase();
     
     if (lowerTitle.contains('geld') || lowerTitle.contains('financiën') || lowerTitle.contains('belasting')) {
