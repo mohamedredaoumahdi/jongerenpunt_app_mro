@@ -4,7 +4,7 @@ import 'package:jongerenpunt_app/screens/auth/forgot_password_screen.dart';
 import 'package:jongerenpunt_app/screens/home/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
-import 'package:jongerenpunt_app/widgets/custom_widgets.dart'; // Import the custom widgets
+import 'package:jongerenpunt_app/widgets/custom_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -107,29 +107,28 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Inloggen'),
+        title: const Text('Inloggen', style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        // Make back button white
         iconTheme: const IconThemeData(color: Colors.white),
         foregroundColor: Colors.white,
       ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: AppTheme.primaryGradient,
         ),
         child: SafeArea(
+          bottom: false, // Don't add padding at the bottom
           child: Stack(
             children: [
-              // Background decorative elements
+              // Background decorative elements - positioned relative to screen
               Positioned(
-                top: -screenHeight * 0.1,
+                top: -100,
                 right: -100,
                 child: Container(
                   height: 200,
@@ -141,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 ),
               ),
               Positioned(
-                bottom: -screenHeight * 0.15,
+                bottom: -150,
                 left: -150,
                 child: Container(
                   height: 300,
@@ -153,11 +152,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 ),
               ),
               
-              // Main content
-              Center(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              // Content
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24.0, 0, 24.0, 0),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height - 
+                                MediaQuery.of(context).padding.top - 
+                                kToolbarHeight,
+                    ),
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: SlideTransition(
@@ -167,6 +171,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              const SizedBox(height: 40),
+                              
                               // Title
                               const Text(
                                 'Log in op je account',
@@ -215,45 +221,49 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               ),
                               
                               // Remember me checkbox and forgot password link
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Remember me checkbox
-                                  LabeledCheckbox(
-                                    label: 'Onthoud mij',
-                                    value: _rememberMe,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _rememberMe = value ?? false;
-                                      });
-                                    },
-                                    textStyle: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
+                              Container(
+                                width: double.infinity, // Ensure the Row has a finite width constraint
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max, // Use all available space
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // Remember me checkbox
+                                    LabeledCheckbox(
+                                      label: 'Onthoud mij',
+                                      value: _rememberMe,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _rememberMe = value ?? false;
+                                        });
+                                      },
+                                      textStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
                                     ),
-                                  ),
-                                  
-                                  // Forgot password link
-                                  TextButton(
-                                    onPressed: _isLoading 
-                                        ? null 
-                                        : () {
-                                            Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (context) => const ForgotPasswordScreen(),
-                                              ),
-                                            );
-                                          },
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                    
+                                    // Forgot password link
+                                    TextButton(
+                                      onPressed: _isLoading 
+                                          ? null 
+                                          : () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (context) => const ForgotPasswordScreen(),
+                                                ),
+                                              );
+                                            },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 4),
+                                      ),
+                                      child: const Text(
+                                        'Wachtwoord vergeten?',
+                                        style: TextStyle(fontWeight: FontWeight.w500),
+                                      ),
                                     ),
-                                    child: const Text(
-                                      'Wachtwoord vergeten?',
-                                      style: TextStyle(fontWeight: FontWeight.w500),
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                               
                               const SizedBox(height: 32),
@@ -268,79 +278,83 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               
                               const SizedBox(height: 24),
                               
-                              // Social login options
-                              Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Expanded(
-                                        child: Divider(color: Colors.white30, thickness: 1),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        child: Text(
-                                          'OF',
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(0.7),
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                      const Expanded(
-                                        child: Divider(color: Colors.white30, thickness: 1),
-                                      ),
-                                    ],
-                                  ),
+                              // // Social login options
+                              // Column(
+                              //   crossAxisAlignment: CrossAxisAlignment.center,
+                              //   children: [
+                              //     Row(
+                              //       children: [
+                              //         const Expanded(
+                              //           child: Divider(color: Colors.white30, thickness: 1),
+                              //         ),
+                              //         Padding(
+                              //           padding: const EdgeInsets.symmetric(horizontal: 16),
+                              //           child: Text(
+                              //             'OF',
+                              //             style: TextStyle(
+                              //               color: Colors.white.withOpacity(0.7),
+                              //               fontWeight: FontWeight.w500,
+                              //             ),
+                              //           ),
+                              //         ),
+                              //         const Expanded(
+                              //           child: Divider(color: Colors.white30, thickness: 1),
+                              //         ),
+                              //       ],
+                              //     ),
                                   
-                                  const SizedBox(height: 24),
+                              //     const SizedBox(height: 24),
                                   
-                                  // Social login buttons
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // Google login button
-                                      _buildSocialButton(
-                                        icon: Icons.g_mobiledata,
-                                        label: 'Google',
-                                        onPressed: () {
-                                          // Implement Google login
-                                          _showSocialLoginNotImplemented('Google');
-                                        },
-                                      ),
-                                      
-                                      const SizedBox(width: 16),
-                                      
-                                      // Facebook login button
-                                      _buildSocialButton(
-                                        icon: Icons.facebook,
-                                        label: 'Facebook',
-                                        onPressed: () {
-                                          // Implement Facebook login
-                                          _showSocialLoginNotImplemented('Facebook');
-                                        },
-                                      ),
-                                      
-                                      const SizedBox(width: 16),
-                                      
-                                      // Apple login button
-                                      _buildSocialButton(
-                                        icon: Icons.apple,
-                                        label: 'Apple',
-                                        onPressed: () {
-                                          // Implement Apple login
-                                          _showSocialLoginNotImplemented('Apple');
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                              //     // Social login buttons - ensure proper width constraints
+                              //     SizedBox(
+                              //       width: double.infinity,
+                              //       child: Row(
+                              //         mainAxisSize: MainAxisSize.min,
+                              //         mainAxisAlignment: MainAxisAlignment.center,
+                              //         children: [
+                              //           // Google login button
+                              //           _buildSocialButton(
+                              //             icon: Icons.g_mobiledata,
+                              //             label: 'Google',
+                              //             onPressed: () {
+                              //               _showSocialLoginNotImplemented('Google');
+                              //             },
+                              //           ),
+                                        
+                              //           const SizedBox(width: 16),
+                                        
+                              //           // Facebook login button
+                              //           _buildSocialButton(
+                              //             icon: Icons.facebook,
+                              //             label: 'Facebook',
+                              //             onPressed: () {
+                              //               _showSocialLoginNotImplemented('Facebook');
+                              //             },
+                              //           ),
+                                        
+                              //           const SizedBox(width: 16),
+                                        
+                              //           // Apple login button
+                              //           _buildSocialButton(
+                              //             icon: Icons.apple,
+                              //             label: 'Apple',
+                              //             onPressed: () {
+                              //               _showSocialLoginNotImplemented('Apple');
+                              //             },
+                              //           ),
+                              //         ],
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
                               
                               const SizedBox(height: 32),
                               
                               // No account yet? Register
-                              Center(
+                              SizedBox(
+                                width: double.infinity, // Ensure the Row has a finite width constraint
                                 child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
@@ -364,6 +378,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   ],
                                 ),
                               ),
+                              
+                              // Add extra space at the bottom to ensure no white gap
+                              const SizedBox(height: 40),
                             ],
                           ),
                         ),
@@ -395,6 +412,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           border: Border.all(color: Colors.white.withOpacity(0.3)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min, // Ensure column doesn't expand
           children: [
             Icon(
               icon,

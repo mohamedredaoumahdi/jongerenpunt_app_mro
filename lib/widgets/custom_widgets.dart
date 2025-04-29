@@ -40,18 +40,18 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // We'll use AppColors.text (0xFF333333) for all text elements regardless of theme
+    final textColor = AppColors.text;
     
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          if (!isDarkMode)
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            )
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          )
         ],
       ),
       margin: const EdgeInsets.only(bottom: 16),
@@ -67,34 +67,41 @@ class CustomTextField extends StatelessWidget {
         focusNode: focusNode,
         autofocus: autoFocus,
         textCapitalization: textCapitalization,
+        // Set input text color to AppColors.text
         style: TextStyle(
-          color: isDarkMode ? Colors.white : AppColors.text,
+          color: textColor,
           fontSize: 16,
         ),
         decoration: InputDecoration(
           labelText: labelText,
           hintText: hintText,
-          prefixIcon: Icon(prefixIcon),
+          prefixIcon: Icon(prefixIcon, color: AppColors.primaryStart),
           suffixIcon: suffixIcon,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: isDarkMode 
-              ? Colors.grey[800] 
-              : Colors.grey[100],
+          fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 16,
           ),
+          // Set label and hint text colors to AppColors.text
           labelStyle: TextStyle(
-            color: isDarkMode ? Colors.white70 : AppColors.lightText,
+            color: textColor,
           ),
           hintStyle: TextStyle(
-            color: isDarkMode 
-                ? Colors.white38 
-                : Colors.grey[400],
+            color: textColor.withOpacity(0.6),
+          ),
+          // Set the focused border color to match the app theme
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primaryStart, width: 1.5),
+          ),
+          // Set error style with appropriate color
+          errorStyle: const TextStyle(
+            color: Colors.red,
           ),
         ),
       ),
@@ -130,8 +137,6 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
   
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
     return CustomTextField(
       controller: widget.controller,
       labelText: widget.labelText,
@@ -142,7 +147,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       suffixIcon: IconButton(
         icon: Icon(
           _obscureText ? Icons.visibility : Icons.visibility_off,
-          color: isDarkMode ? Colors.white70 : AppColors.lightText,
+          color: AppColors.primaryStart,
         ),
         onPressed: () {
           setState(() {
@@ -642,6 +647,7 @@ class LabeledCheckbox extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
+          mainAxisSize: MainAxisSize.min, // This is the crucial fix - keep row as small as possible
           children: [
             SizedBox(
               height: 24,
@@ -661,7 +667,7 @@ class LabeledCheckbox extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
+            Flexible(  // Use Flexible instead of Expanded to handle unbounded width
               child: Text(
                 label,
                 style: textStyle ?? TextStyle(

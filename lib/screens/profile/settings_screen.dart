@@ -3,7 +3,7 @@ import 'package:jongerenpunt_app/constants/app_theme.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jongerenpunt_app/services/settings_service.dart';
+import 'package:jongerenpunt_app/widgets/custom_widgets.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -14,9 +14,13 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = true;
-  bool _isDarkModeEnabled = false;
   bool _isNotificationsEnabled = true;
-  String _selectedLanguage = 'Nederlands';
+  
+  // Controllers for password change dialog
+  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final _passwordFormKey = GlobalKey<FormState>();
   
   @override
   void initState() {
@@ -24,14 +28,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
   
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+  
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       
       setState(() {
-        _isDarkModeEnabled = prefs.getBool('dark_mode_enabled') ?? false;
         _isNotificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
-        _selectedLanguage = prefs.getString('language') ?? 'Nederlands';
         _isLoading = false;
       });
     } catch (e) {
@@ -39,28 +49,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _isLoading = false;
       });
-    }
-  }
-  
-  Future<void> _setDarkMode(bool value) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('dark_mode_enabled', value);
-      setState(() {
-        _isDarkModeEnabled = value;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            value 
-                ? 'Donker thema ingeschakeld (herstart de app om te zien)'
-                : 'Licht thema ingeschakeld (herstart de app om te zien)',
-          ),
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error setting dark mode: $e');
     }
   }
   
@@ -76,26 +64,135 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
   
-  Future<void> _setLanguage(String language) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('language', language);
-      setState(() {
-        _selectedLanguage = language;
-      });
-      
-      // Show information about language change
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Taal gewijzigd naar $language (herstart de app om te zien)',
+  // Show password change dialog
+  void _showChangePasswordDialog() {
+    // Clear previous inputs
+    _currentPasswordController.clear();
+    _newPasswordController.clear();
+    _confirmPasswordController.clear();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Wachtwoord wijzigen'),
+        content: Form(
+          key: _passwordFormKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Current password field
+                PasswordTextField(
+                  controller: _currentPasswordController,
+                  labelText: 'Huidig wachtwoord',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Voer je huidige wachtwoord in';
+                    }
+                    return null;
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // New password field
+                PasswordTextField(
+                  controller: _newPasswordController,
+                  labelText: 'Nieuw wachtwoord',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Voer een nieuw wachtwoord in';
+                    }
+                    if (value.length < 8) {
+                      return 'Wachtwoord moet minimaal 8 tekens bevatten';
+                    }
+                    return null;
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Confirm password field
+                PasswordTextField(
+                  controller: _confirmPasswordController,
+                  labelText: 'Bevestig wachtwoord',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Bevestig je nieuwe wachtwoord';
+                    }
+                    if (value != _newPasswordController.text) {
+                      return 'Wachtwoorden komen niet overeen';
+                    }
+                    return null;
+                  },
+                ),
+              ],
             ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuleren'),
+          ),
+          ElevatedButton(
+            onPressed: () => _updatePassword(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryStart,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Bijwerken'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Update password
+  Future<void> _updatePassword(BuildContext dialogContext) async {
+    // Validate form
+    if (!_passwordFormKey.currentState!.validate()) {
+      return;
+    }
+    
+    final authService = Provider.of<AuthService>(context, listen: false);
+    
+    try {
+      // Close dialog first
+      Navigator.of(dialogContext).pop();
+      
+      // Show loading indicator
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Wachtwoord wordt bijgewerkt...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      
+      // Update password
+      await authService.updatePassword(
+        _currentPasswordController.text,
+        _newPasswordController.text,
+      );
+      
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Wachtwoord is succesvol bijgewerkt'),
+            backgroundColor: AppColors.success,
           ),
         );
       }
     } catch (e) {
-      debugPrint('Error setting language: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fout: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
   
@@ -106,7 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Instellingen', style: TextStyle(color : Colors.white),),
+        title: const Text('Instellingen', style: TextStyle(color: Colors.white)),
         backgroundColor: AppColors.primaryStart,
         foregroundColor: Colors.white,
       ),
@@ -143,11 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profiel bewerken functionaliteit wordt binnenkort toegevoegd'),
-                            ),
-                          );
+                          Navigator.pushNamed(context, '/edit_profile');
                         },
                       ),
                       
@@ -159,28 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           leading: const Icon(Icons.lock, color: AppColors.primaryStart),
                           title: const Text('Wachtwoord wijzigen'),
                           trailing: const Icon(Icons.chevron_right),
-                          onTap: () async {
-                            try {
-                              await authService.resetPassword(authService.currentUser?.email ?? '');
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('E-mail voor wachtwoord wijzigen is verzonden'),
-                                    backgroundColor: AppColors.success,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Fout: $e'),
-                                    backgroundColor: AppColors.error,
-                                  ),
-                                );
-                              }
-                            }
-                          },
+                          onTap: _showChangePasswordDialog,
                         ),
                       
                       // Create account (only for anonymous users)
@@ -235,55 +307,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 
                 const SizedBox(height: 24),
                 
-                // Appearance section
-                const Text(
-                  'Weergave',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.lightText,
-                  ),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      // Dark mode toggle
-                      SwitchListTile(
-                        title: const Text('Donkere modus'),
-                        subtitle: const Text('Schakel tussen licht en donker thema'),
-                        value: _isDarkModeEnabled,
-                        activeColor: AppColors.primaryStart,
-                        onChanged: (value) async {
-                          await _setDarkMode(value);
-                        },
-                        secondary: const Icon(Icons.brightness_6, color: AppColors.primaryStart),
-                      ),
-                      
-                      const Divider(),
-                      
-                      // Language selection
-                      ListTile(
-                        leading: const Icon(Icons.language, color: AppColors.primaryStart),
-                        title: const Text('Taal'),
-                        subtitle: Text(_selectedLanguage),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          _showLanguageSelectionDialog();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
                 // About section
                 const Text(
                   'Over',
@@ -301,98 +324,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Column(
-                    children: [
-                      // Privacy policy
-                      ListTile(
-                        leading: const Icon(Icons.privacy_tip, color: AppColors.primaryStart),
-                        title: const Text('Privacybeleid'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          // This would typically open a WebView or navigate to a privacy policy screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Privacybeleid wordt binnenkort toegevoegd'),
-                            ),
-                          );
-                        },
-                      ),
-                      
-                      const Divider(),
-                      
-                      // Terms and conditions
-                      ListTile(
-                        leading: const Icon(Icons.description, color: AppColors.primaryStart),
-                        title: const Text('Gebruiksvoorwaarden'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          // This would typically open a WebView or navigate to a terms screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Gebruiksvoorwaarden worden binnenkort toegevoegd'),
-                            ),
-                          );
-                        },
-                      ),
-                      
-                      const Divider(),
-                      
-                      // App version
-                      const ListTile(
-                        leading: Icon(Icons.info, color: AppColors.primaryStart),
-                        title: Text('Versie'),
-                        subtitle: Text('1.0.0'),
-                      ),
-                    ],
+                  child: const ListTile(
+                    leading: Icon(Icons.info, color: AppColors.primaryStart),
+                    title: Text('Versie'),
+                    subtitle: Text('1.0.0'),
                   ),
                 ),
               ],
             ),
-    );
-  }
-  
-  void _showLanguageSelectionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Kies een taal'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildLanguageOption('Nederlands'),
-            _buildLanguageOption('English'),
-            _buildLanguageOption('Français'),
-            _buildLanguageOption('Deutsch'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuleren'),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildLanguageOption(String language) {
-    return ListTile(
-      title: Text(language),
-      leading: Radio<String>(
-        value: language,
-        groupValue: _selectedLanguage,
-        activeColor: AppColors.primaryStart,
-        onChanged: (value) async {
-          if (value != null) {
-            await _setLanguage(value);
-            Navigator.of(context).pop();
-          }
-        },
-      ),
-      onTap: () async {
-        await _setLanguage(language);
-        Navigator.of(context).pop();
-      },
     );
   }
 }

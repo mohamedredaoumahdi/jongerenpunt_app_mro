@@ -95,12 +95,12 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat Assistent'),
+        title: const Text('Chat Assistent', style : TextStyle(color : Colors.white)),
         backgroundColor: AppColors.primaryStart,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete, color: Colors.white,),
             onPressed: _showResetChatDialog,
             tooltip: 'Chat wissen',
           ),

@@ -317,23 +317,23 @@ class _ContactScreenState extends State<ContactScreen> {
                     
                     const Divider(),
                     
-                    // Phone option
-                    ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryStart.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.phone,
-                          color: AppColors.primaryStart,
-                        ),
-                      ),
-                      title: const Text('Telefoon'),
-                      subtitle: const Text('+31 6 12345678'),
-                      onTap: _openPhoneApp,
-                    ),
+                    // // Phone option
+                    // ListTile(
+                    //   leading: Container(
+                    //     padding: const EdgeInsets.all(8),
+                    //     decoration: BoxDecoration(
+                    //       color: AppColors.primaryStart.withOpacity(0.1),
+                    //       borderRadius: BorderRadius.circular(8),
+                    //     ),
+                    //     child: const Icon(
+                    //       Icons.phone,
+                    //       color: AppColors.primaryStart,
+                    //     ),
+                    //   ),
+                    //   title: const Text('Telefoon'),
+                    //   subtitle: const Text('+31 6 12345678'),
+                    //   onTap: _openPhoneApp,
+                    // ),
                   ],
                 ),
               ),

@@ -52,7 +52,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: AppColors.text),
+        iconTheme: IconThemeData(color: Colors.white),
         titleTextStyle: TextStyle(
           color: AppColors.text,
           fontSize: 20,

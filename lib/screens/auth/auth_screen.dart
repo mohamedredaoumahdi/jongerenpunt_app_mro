@@ -127,235 +127,245 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     }
     
     return Scaffold(
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: AppTheme.primaryGradient,
         ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              // Background elements
-              Positioned(
-                top: -screenHeight * 0.1,
-                right: -100,
-                child: Container(
-                  height: 200,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.05),
+        child: Column(
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  // Background elements
+                  Positioned(
+                    top: -screenHeight * 0.1,
+                    right: -100,
+                    child: Container(
+                      height: 200,
+                      width: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.05),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Positioned(
-                bottom: -screenHeight * 0.15,
-                left: -150,
-                child: Container(
-                  height: 300,
-                  width: 300,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.05),
+                  Positioned(
+                    bottom: -screenHeight * 0.15,
+                    left: -150,
+                    child: Container(
+                      height: 300,
+                      width: 300,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.05),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              
-              // Main content
-              SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: Column(
-                    children: [
-                      SizedBox(height: screenHeight * 0.08),
-                      
-                      // Logo
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.1),
-                          ),
-                          child: Image.asset(
-                            'assets/images/logo.png',
-                            width: 100,
-                            height: 100,
-                            errorBuilder: (context, error, stackTrace) {
-                              if (kDebugMode) {
-                                print('Error loading logo: $error');
-                              }
-                              // Fallback if logo image is missing
-                              return Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.people,
-                                  size: 50,
-                                  color: Colors.white,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      
-                      SizedBox(height: screenHeight * 0.04),
-                      
-                      // Welcome title
-                      SlideTransition(
-                        position: _slideAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: const Text(
-                            'Welkom bij Jongerenpunt',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                      
-                      SizedBox(height: screenHeight * 0.02),
-                      
-                      // Welcome description
-                      SlideTransition(
-                        position: _slideAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: const Text(
-                            'Jouw gids voor informatie over financiën, gezondheid, onderwijs, wonen en meer',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                              height: 1.4,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                      
-                      SizedBox(height: screenHeight * 0.06),
-                      
-                      // Error message if any
-                      if (_errorMessage != null)
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.only(bottom: 20),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.red.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.only(top: 2),
-                                child: Icon(Icons.error_outline, color: Colors.red, size: 18),
+                  
+                  // Main content
+                  SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(32.0, 48.0, 32.0, 0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          SizedBox(height: screenHeight * 0.08),
+                          
+                          // Logo - increased size
+                          FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.1),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      
-                      // Login button
-                      SlideTransition(
-                        position: _slideAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: _buildButton(
-                            text: 'Inloggen',
-                            icon: Icons.login,
-                            isPrimary: true,
-                            onPressed: _isLoading 
-                                ? null 
-                                : () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => const LoginScreen(),
-                                      ),
-                                    );
-                                  },
-                          ),
-                        ),
-                      ),
-                      
-                      SizedBox(height: screenHeight * 0.02),
-                      
-                      // Register button
-                      SlideTransition(
-                        position: _slideAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: _buildButton(
-                            text: 'Registreren',
-                            icon: Icons.person_add,
-                            isPrimary: false,
-                            onPressed: _isLoading 
-                                ? null 
-                                : () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => const RegisterScreen(),
-                                      ),
-                                    );
-                                  },
-                          ),
-                        ),
-                      ),
-                      
-                      SizedBox(height: screenHeight * 0.04),
-                      
-                      // Continue as guest
-                      SlideTransition(
-                        position: _slideAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: TextButton.icon(
-                            onPressed: _isLoading ? null : _continueAsGuest,
-                            icon: _isLoading
-                                ? Container(
-                                    width: 18,
-                                    height: 18,
-                                    padding: const EdgeInsets.all(2),
-                                    child: const CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.0,
+                              child: Image.asset(
+                                'assets/images/logo1.png',
+                                width: 180, // Increased from 100
+                                height: 180, // Increased from 100
+                                errorBuilder: (context, error, stackTrace) {
+                                  if (kDebugMode) {
+                                    print('Error loading logo: $error');
+                                  }
+                                  // Fallback if logo image is missing
+                                  return Container(
+                                    width: 180,
+                                    height: 180,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      shape: BoxShape.circle,
                                     ),
-                                  )
-                                : const Icon(Icons.remove_red_eye, color: Colors.white70, size: 18),
-                            label: Text(
-                              _isLoading ? 'Even geduld...' : 'Doorgaan zonder account',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
+                                    child: const Icon(
+                                      Icons.people,
+                                      size: 90, // Increased from 50
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ),
-                        ),
+                          
+                          SizedBox(height: screenHeight * 0.04),
+                          
+                          // Welcome title
+                          SlideTransition(
+                            position: _slideAnimation,
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: const Text(
+                                'Welkom bij Jongerenpunt',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          
+                          SizedBox(height: screenHeight * 0.02),
+                          
+                          // Welcome description
+                          SlideTransition(
+                            position: _slideAnimation,
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: const Text(
+                                'Jouw gids voor informatie over financiën, gezondheid, onderwijs, wonen en meer',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                  height: 1.4,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          
+                          SizedBox(height: screenHeight * 0.06),
+                          
+                          // Error message if any
+                          if (_errorMessage != null)
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(bottom: 20),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 2),
+                                    child: Icon(Icons.error_outline, color: Colors.red, size: 18),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          
+                          // Login button
+                          SlideTransition(
+                            position: _slideAnimation,
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: _buildButton(
+                                text: 'Inloggen',
+                                icon: Icons.login,
+                                isPrimary: true,
+                                onPressed: _isLoading 
+                                    ? null 
+                                    : () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => const LoginScreen(),
+                                          ),
+                                        );
+                                      },
+                              ),
+                            ),
+                          ),
+                          
+                          SizedBox(height: screenHeight * 0.02),
+                          
+                          // Register button
+                          SlideTransition(
+                            position: _slideAnimation,
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: _buildButton(
+                                text: 'Registreren',
+                                icon: Icons.person_add,
+                                isPrimary: false,
+                                onPressed: _isLoading 
+                                    ? null 
+                                    : () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => const RegisterScreen(),
+                                          ),
+                                        );
+                                      },
+                              ),
+                            ),
+                          ),
+                          
+                          SizedBox(height: screenHeight * 0.04),
+                          
+                          // Continue as guest
+                          SlideTransition(
+                            position: _slideAnimation,
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: TextButton.icon(
+                                onPressed: _isLoading ? null : _continueAsGuest,
+                                icon: _isLoading
+                                    ? Container(
+                                        width: 18,
+                                        height: 18,
+                                        padding: const EdgeInsets.all(2),
+                                        child: const CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.0,
+                                        ),
+                                      )
+                                    : const Icon(Icons.remove_red_eye, color: Colors.white70, size: 18),
+                                label: Text(
+                                  _isLoading ? 'Even geduld...' : 'Doorgaan zonder account',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          
+                          // Add spacing to ensure bottom content is visible
+                          SizedBox(height: screenHeight * 0.05),
+                        ],
                       ),
-                      
-                      SizedBox(height: screenHeight * 0.04),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
