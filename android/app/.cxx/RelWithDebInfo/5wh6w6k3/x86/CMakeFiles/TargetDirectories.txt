@@ -1,0 +1,2 @@
+/Users/MRO/Desktop/cursor/jongerenpunt_app/android/app/.cxx/RelWithDebInfo/5wh6w6k3/x86/CMakeFiles/edit_cache.dir
+/Users/MRO/Desktop/cursor/jongerenpunt_app/android/app/.cxx/RelWithDebInfo/5wh6w6k3/x86/CMakeFiles/rebuild_cache.dir

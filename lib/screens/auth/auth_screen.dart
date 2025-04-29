@@ -217,7 +217,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             Text('Even geduld...', style: TextStyle(color: Colors.white)),
                           ],
                         )
-                      : const Text('Doorgaan als gast', style: TextStyle(color: Colors.white)),
+                      : const Text('Anoniem doorgaan', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
