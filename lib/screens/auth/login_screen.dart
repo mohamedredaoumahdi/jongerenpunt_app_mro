@@ -4,6 +4,7 @@ import 'package:jongerenpunt_app/screens/auth/forgot_password_screen.dart';
 import 'package:jongerenpunt_app/screens/home/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:jongerenpunt_app/services/auth_service.dart';
+import 'package:jongerenpunt_app/widgets/custom_widgets.dart'; // Import the custom widgets
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -12,21 +13,69 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _obscurePassword = true;
+  String? _errorMessage;
+  bool _rememberMe = false;
+  
+  // Animation controller for staggered animations
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    
+    // Slide animation for form fields
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.2, 0.7, curve: Curves.easeOut),
+      ),
+    );
+    
+    // Fade animation for form fields
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.2, 0.7, curve: Curves.easeOut),
+      ),
+    );
+    
+    // Start the animation
+    _animationController.forward();
+  }
   
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
   
   Future<void> _login() async {
+    // Clear previous error messages
+    setState(() {
+      _errorMessage = null;
+    });
+    
     if (!_formKey.currentState!.validate()) return;
     
     setState(() {
@@ -48,16 +97,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
         setState(() {
+          _errorMessage = e.toString();
           _isLoading = false;
         });
       }
@@ -66,140 +107,319 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Inloggen'),
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
         elevation: 0,
+        // Make back button white
+        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
       ),
-      extendBodyBehindAppBar: true,
       body: Container(
         decoration: BoxDecoration(
           gradient: AppTheme.primaryGradient,
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    const Text(
-                      'Log in op je account',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Email field
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: AppColors.text),
-                      decoration: const InputDecoration(
-                        labelText: 'E-mailadres',
-                        prefixIcon: Icon(Icons.email),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Voer je e-mailadres in';
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                          return 'Voer een geldig e-mailadres in';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Password field
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: const TextStyle(color: AppColors.text),
-                      decoration: InputDecoration(
-                        labelText: 'Wachtwoord',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Voer je wachtwoord in';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Forgot password link
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _isLoading 
-                            ? null 
-                            : () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const ForgotPasswordScreen(),
-                                  ),
-                                );
-                              },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Wachtwoord vergeten?'),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Login button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _login,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.primaryStart,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: _isLoading 
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primaryStart,
-                                  strokeWidth: 2.0,
-                                ),
-                              )
-                            : const Text('Inloggen'),
-                      ),
-                    ),
-                  ],
+          child: Stack(
+            children: [
+              // Background decorative elements
+              Positioned(
+                top: -screenHeight * 0.1,
+                right: -100,
+                child: Container(
+                  height: 200,
+                  width: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.05),
+                  ),
                 ),
               ),
-            ),
+              Positioned(
+                bottom: -screenHeight * 0.15,
+                left: -150,
+                child: Container(
+                  height: 300,
+                  width: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                ),
+              ),
+              
+              // Main content
+              Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Title
+                              const Text(
+                                'Log in op je account',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 8),
+                              
+                              // Subtitle
+                              const Text(
+                                'Welkom terug! Vul je gegevens in om toegang te krijgen.',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 32),
+                              
+                              // Error message if any
+                              if (_errorMessage != null)
+                                ErrorMessage(
+                                  message: _errorMessage!,
+                                  onDismiss: () {
+                                    setState(() {
+                                      _errorMessage = null;
+                                    });
+                                  },
+                                ),
+                              
+                              // Email field
+                              EmailTextField(
+                                controller: _emailController,
+                                labelText: 'E-mailadres',
+                                hintText: 'jouw@email.nl',
+                              ),
+                              
+                              // Password field
+                              PasswordTextField(
+                                controller: _passwordController,
+                                labelText: 'Wachtwoord',
+                              ),
+                              
+                              // Remember me checkbox and forgot password link
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Remember me checkbox
+                                  LabeledCheckbox(
+                                    label: 'Onthoud mij',
+                                    value: _rememberMe,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _rememberMe = value ?? false;
+                                      });
+                                    },
+                                    textStyle: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  
+                                  // Forgot password link
+                                  TextButton(
+                                    onPressed: _isLoading 
+                                        ? null 
+                                        : () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) => const ForgotPasswordScreen(),
+                                              ),
+                                            );
+                                          },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                    ),
+                                    child: const Text(
+                                      'Wachtwoord vergeten?',
+                                      style: TextStyle(fontWeight: FontWeight.w500),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              
+                              const SizedBox(height: 32),
+                              
+                              // Login button
+                              PrimaryButton(
+                                text: 'Inloggen',
+                                onPressed: _login,
+                                isLoading: _isLoading,
+                                icon: Icons.login,
+                              ),
+                              
+                              const SizedBox(height: 24),
+                              
+                              // Social login options
+                              Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Divider(color: Colors.white30, thickness: 1),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          'OF',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.7),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      const Expanded(
+                                        child: Divider(color: Colors.white30, thickness: 1),
+                                      ),
+                                    ],
+                                  ),
+                                  
+                                  const SizedBox(height: 24),
+                                  
+                                  // Social login buttons
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      // Google login button
+                                      _buildSocialButton(
+                                        icon: Icons.g_mobiledata,
+                                        label: 'Google',
+                                        onPressed: () {
+                                          // Implement Google login
+                                          _showSocialLoginNotImplemented('Google');
+                                        },
+                                      ),
+                                      
+                                      const SizedBox(width: 16),
+                                      
+                                      // Facebook login button
+                                      _buildSocialButton(
+                                        icon: Icons.facebook,
+                                        label: 'Facebook',
+                                        onPressed: () {
+                                          // Implement Facebook login
+                                          _showSocialLoginNotImplemented('Facebook');
+                                        },
+                                      ),
+                                      
+                                      const SizedBox(width: 16),
+                                      
+                                      // Apple login button
+                                      _buildSocialButton(
+                                        icon: Icons.apple,
+                                        label: 'Apple',
+                                        onPressed: () {
+                                          // Implement Apple login
+                                          _showSocialLoginNotImplemented('Apple');
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              
+                              const SizedBox(height: 32),
+                              
+                              // No account yet? Register
+                              Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Nog geen account?',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.7),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pushReplacementNamed(context, '/register');
+                                      },
+                                      child: const Text(
+                                        'Registreer hier',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+  
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: Colors.white,
+              size: 28,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showSocialLoginNotImplemented(String provider) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Inloggen met $provider is nog niet beschikbaar.'),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

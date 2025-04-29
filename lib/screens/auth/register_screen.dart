@@ -20,6 +20,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  String? _errorMessage;
+  bool _acceptedTerms = false;
   
   @override
   void dispose() {
@@ -29,8 +31,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
   
+  // Improved email validation
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+  
+  // Password strength validation
+  String? _validatePasswordStrength(String password) {
+    if (password.length < 8) {
+      return 'Wachtwoord moet minimaal 8 tekens bevatten';
+    }
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      return 'Wachtwoord moet minimaal 1 hoofdletter bevatten';
+    }
+    if (!password.contains(RegExp(r'[0-9]'))) {
+      return 'Wachtwoord moet minimaal 1 cijfer bevatten';
+    }
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      return 'Wachtwoord moet minimaal 1 speciaal teken bevatten';
+    }
+    return null;
+  }
+  
   Future<void> _register() async {
+    // Clear previous error messages
+    setState(() {
+      _errorMessage = null;
+    });
+    
     if (!_formKey.currentState!.validate()) return;
+    
+    if (!_acceptedTerms) {
+      setState(() {
+        _errorMessage = 'Je moet de gebruiksvoorwaarden accepteren om door te gaan';
+      });
+      return;
+    }
     
     setState(() {
       _isLoading = true;
@@ -81,14 +117,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppColors.error,
-          ),
-        );
-        
         setState(() {
+          _errorMessage = e.toString();
           _isLoading = false;
         });
       }
@@ -110,13 +140,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         : 'Registreren';
     
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isAnonymous ? 'Account aanmaken' : 'Registreren'),
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
       extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text(
+          isAnonymous ? 'Account aanmaken' : 'Registreren', 
+          style: const TextStyle(color: Colors.white)
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        // Make back button white
+        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: AppTheme.primaryGradient,
@@ -124,152 +159,314 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      titleText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Email field
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: AppColors.text),
-                      decoration: const InputDecoration(
-                        labelText: 'E-mailadres',
-                        prefixIcon: Icon(Icons.email),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Voer je e-mailadres in';
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                          return 'Voer een geldig e-mailadres in';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Password field
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: const TextStyle(color: AppColors.text),
-                      decoration: InputDecoration(
-                        labelText: 'Wachtwoord',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Voer je wachtwoord in';
-                        }
-                        if (value.length < 6) {
-                          return 'Wachtwoord moet minimaal 6 tekens bevatten';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Confirm password field
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureConfirmPassword,
-                      style: const TextStyle(color: AppColors.text),
-                      decoration: InputDecoration(
-                        labelText: 'Bevestig wachtwoord',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Bevestig je wachtwoord';
-                        }
-                        if (value != _passwordController.text) {
-                          return 'Wachtwoorden komen niet overeen';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Register button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.primaryStart,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: _isLoading 
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primaryStart,
-                                  strokeWidth: 2.0,
-                                ),
-                              )
-                            : Text(buttonText),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Terms and conditions
-                    const Center(
-                      child: Text(
-                        'Door te registreren ga je akkoord met onze\ngebruiksvoorwaarden en privacybeleid',
-                        style: TextStyle(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        titleText,
+                        style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Subtitle
+                      const Text(
+                        'Maak een account om alle functies te gebruiken.',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Error message if any
+                      if (_errorMessage != null)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: Icon(Icons.error_outline, color: Colors.red, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      
+                      // Email field
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'E-mailadres',
+                            hintText: 'jouw@email.nl',
+                            prefixIcon: const Icon(Icons.email, color: Colors.white70),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Voer je e-mailadres in';
+                            }
+                            if (!_isValidEmail(value)) {
+                              return 'Voer een geldig e-mailadres in';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Password field
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Wachtwoord',
+                            prefixIcon: const Icon(Icons.lock, color: Colors.white70),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                color: Colors.white70,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Voer je wachtwoord in';
+                            }
+                            return _validatePasswordStrength(value);
+                          },
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Confirm password field
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextFormField(
+                          controller: _confirmPasswordController,
+                          obscureText: _obscureConfirmPassword,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Bevestig wachtwoord',
+                            prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                                color: Colors.white70,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                                });
+                              },
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Bevestig je wachtwoord';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Wachtwoorden komen niet overeen';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Terms and conditions checkbox
+                      Row(
+                        children: [
+                          SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: Checkbox(
+                              value: _acceptedTerms,
+                              onChanged: (value) {
+                                setState(() {
+                                  _acceptedTerms = value ?? false;
+                                });
+                              },
+                              fillColor: MaterialStateProperty.resolveWith<Color>(
+                                (Set<MaterialState> states) {
+                                  if (states.contains(MaterialState.selected)) {
+                                    return Colors.white;
+                                  }
+                                  return Colors.white70;
+                                },
+                              ),
+                              checkColor: AppColors.primaryStart,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _acceptedTerms = !_acceptedTerms;
+                                });
+                              },
+                              child: const Text(
+                                'Ik ga akkoord met de Gebruiksvoorwaarden en Privacybeleid',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Register button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _register,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppColors.primaryStart,
+                            disabledBackgroundColor: Colors.white.withOpacity(0.6),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: _isLoading 
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.primaryStart,
+                                    strokeWidth: 2.0,
+                                  ),
+                                )
+                              : Text(
+                                  buttonText,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Password requirements hint
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Wachtwoord vereisten:',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildRequirementRow('Minimaal 8 tekens'),
+                            _buildRequirementRow('Minimaal 1 hoofdletter (A-Z)'),
+                            _buildRequirementRow('Minimaal 1 cijfer (0-9)'),
+                            _buildRequirementRow('Minimaal 1 speciaal teken (!@#\$%^&*.,?)'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+  
+  Widget _buildRequirementRow(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline, color: Colors.white70, size: 16),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+        ],
       ),
     );
   }

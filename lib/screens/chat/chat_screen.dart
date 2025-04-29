@@ -30,11 +30,6 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _isInitialized = true;
       });
-      
-      // Add welcome message if chat is empty
-      if (_chatService.messages.isEmpty) {
-        _addWelcomeMessage();
-      }
     } catch (e) {
       if (kDebugMode) {
         print('Error initializing chat service: $e');
@@ -44,20 +39,7 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _isInitialized = true;
       });
-      
-      _addWelcomeMessage();
     }
-  }
-  
-  void _addWelcomeMessage() {
-    _chatService.messages.add(
-      ChatMessage(
-        text: 'Hallo! Ik ben de Jongerenpunt assistent. Hoe kan ik je vandaag helpen? Je kunt me vragen stellen over financiën, gezondheid, studie, werk, wonen, vrije tijd, en meer!',
-        isUser: false,
-      ),
-    );
-    
-    _chatService.notifyListeners();
   }
   
   @override
@@ -85,6 +67,29 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
   }
+  
+  void _showResetChatDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Chat wissen'),
+        content: const Text('Weet je zeker dat je het chatgesprek wilt wissen?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuleren'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _chatService.clearChat();
+            },
+            child: const Text('Wissen'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,29 +101,8 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Chat wissen'),
-                  content: const Text('Weet je zeker dat je het chatgesprek wilt wissen?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Annuleren'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _chatService.clearChat();
-                        _addWelcomeMessage();
-                      },
-                      child: const Text('Wissen'),
-                    ),
-                  ],
-                ),
-              );
-            },
+            onPressed: _showResetChatDialog,
+            tooltip: 'Chat wissen',
           ),
         ],
       ),
@@ -131,6 +115,22 @@ class _ChatScreenState extends State<ChatScreen> {
                     animation: _chatService,
                     builder: (context, _) {
                       final messages = _chatService.messages;
+                      
+                      // If no messages, show welcome empty state
+                      if (messages.isEmpty) {
+                        return _buildEmptyChat();
+                      }
+                      
+                      // Handle automatic scrolling to bottom when new messages arrive
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients) {
+                          _scrollController.animateTo(
+                            _scrollController.position.maxScrollExtent,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          );
+                        }
+                      });
                       
                       return ListView.builder(
                         controller: _scrollController,
@@ -145,7 +145,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
                 
-                // Loading indicator
+                // Typing indicator
                 AnimatedBuilder(
                   animation: _chatService,
                   builder: (context, _) {
@@ -201,6 +201,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           textCapitalization: TextCapitalization.sentences,
                           onSubmitted: (_) => _sendMessage(),
+                          maxLines: null,
+                          textInputAction: TextInputAction.send,
                         ),
                       ),
                       IconButton(
@@ -213,6 +215,54 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ],
             ),
+    );
+  }
+  
+  Widget _buildEmptyChat() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.chat_bubble_outline, 
+            size: 80, 
+            color: Colors.grey[300],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Je chat met de Jongerenpunt assistent',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Text(
+              'Stel vragen over financiën, studie, werk, gezondheid, wonen, en meer!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () {
+              _messageController.text = "Hallo! Kun je me helpen?";
+              _sendMessage();
+            },
+            icon: const Icon(Icons.chat),
+            label: const Text('Start een gesprek'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryStart,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
   

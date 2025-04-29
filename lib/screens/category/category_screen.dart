@@ -65,6 +65,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             expandedHeight: 200.0,
             pinned: true,
             stretch: true,
+            iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.category.title,

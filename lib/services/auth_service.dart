@@ -45,26 +45,26 @@ class AuthService with ChangeNotifier {
         print('Firebase Auth Error: ${e.code} - ${e.message}');
       }
       
-      // More specific error handling
+      // More user-friendly error messages
       switch (e.code) {
         case 'weak-password':
           throw 'Het wachtwoord is te zwak. Kies een sterker wachtwoord.';
         case 'email-already-in-use':
-          throw 'Dit e-mailadres is al in gebruik.';
+          throw 'Dit e-mailadres is al in gebruik. Probeer in te loggen of gebruik een ander e-mailadres.';
         case 'invalid-email':
-          throw 'Ongeldig e-mailadres.';
+          throw 'Ongeldig e-mailadres. Controleer of je het juiste e-mailadres hebt ingevoerd.';
         case 'operation-not-allowed':
-          throw 'E-mail/wachtwoord accounts zijn niet ingeschakeld.';
+          throw 'Registratie met e-mail/wachtwoord is momenteel niet mogelijk. Probeer het later opnieuw.';
         case 'network-request-failed':
-          throw 'Netwerkverbinding mislukt. Controleer je internetverbinding.';
+          throw 'Netwerkverbinding mislukt. Controleer je internetverbinding en probeer het opnieuw.';
         default:
-          throw 'Registratie mislukt: ${e.message ?? e.code}';
+          throw 'Registratie mislukt: ${e.message ?? "Onbekende fout"}';
       }
     } catch (e) {
       if (kDebugMode) {
         print('Unexpected error during registration: $e');
       }
-      throw 'Er is een onverwachte fout opgetreden: $e';
+      throw 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.';
     }
   }
   
@@ -87,30 +87,30 @@ class AuthService with ChangeNotifier {
         print('Firebase Auth Error: ${e.code} - ${e.message}');
       }
       
-      // More specific error handling
+      // More user-friendly error messages
       switch (e.code) {
         case 'user-not-found':
-          throw 'Geen gebruiker gevonden met dit e-mailadres.';
+          throw 'Geen gebruiker gevonden met dit e-mailadres. Controleer je e-mailadres of maak een nieuw account aan.';
         case 'wrong-password':
-          throw 'Ongeldig wachtwoord.';
+          throw 'Onjuist wachtwoord. Probeer het opnieuw of reset je wachtwoord.';
         case 'user-disabled':
-          throw 'Deze gebruiker is uitgeschakeld.';
+          throw 'Dit account is uitgeschakeld. Neem contact op met de klantenservice.';
         case 'too-many-requests':
-          throw 'Te veel inlogpogingen. Probeer het later opnieuw.';
+          throw 'Te veel inlogpogingen. Wacht even en probeer het later opnieuw.';
         case 'operation-not-allowed':
-          throw 'E-mail/wachtwoord accounts zijn niet ingeschakeld.';
+          throw 'Inloggen met e-mail/wachtwoord is momenteel niet mogelijk. Probeer het later opnieuw.';
         case 'invalid-email':
-          throw 'Ongeldig e-mailadres.';
+          throw 'Ongeldig e-mailadres. Controleer of je het juiste e-mailadres hebt ingevoerd.';
         case 'network-request-failed':
-          throw 'Netwerkverbinding mislukt. Controleer je internetverbinding.';
+          throw 'Netwerkverbinding mislukt. Controleer je internetverbinding en probeer het opnieuw.';
         default:
-          throw 'Inloggen mislukt: ${e.message ?? e.code}';
+          throw 'Inloggen mislukt: ${e.message ?? "Onbekende fout"}';
       }
     } catch (e) {
       if (kDebugMode) {
         print('Unexpected error during sign in: $e');
       }
-      throw 'Er is een onverwachte fout opgetreden: $e';
+      throw 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.';
     }
   }
   
@@ -138,12 +138,12 @@ class AuthService with ChangeNotifier {
       if (kDebugMode) {
         print('Firebase Auth Error: ${e.code} - ${e.message}');
       }
-      throw 'Anoniem inloggen mislukt: ${e.message ?? 'Onbekende fout'}';
+      throw 'Anoniem inloggen mislukt. Probeer het later opnieuw.';
     } catch (e) {
       if (kDebugMode) {
         print('Unexpected error during anonymous sign in: $e');
       }
-      throw 'Er is een onverwachte fout opgetreden: $e';
+      throw 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.';
     }
   }
   
@@ -156,7 +156,7 @@ class AuthService with ChangeNotifier {
       if (kDebugMode) {
         print('Error signing out: $e');
       }
-      throw 'Uitloggen mislukt: $e';
+      throw 'Uitloggen mislukt. Probeer het later opnieuw.';
     }
   }
   
@@ -171,19 +171,19 @@ class AuthService with ChangeNotifier {
       
       switch (e.code) {
         case 'invalid-email':
-          throw 'Ongeldig e-mailadres.';
+          throw 'Ongeldig e-mailadres. Controleer of je het juiste e-mailadres hebt ingevoerd.';
         case 'user-not-found':
-          throw 'Geen gebruiker gevonden met dit e-mailadres.';
+          throw 'Geen gebruiker gevonden met dit e-mailadres. Controleer je e-mailadres of maak een nieuw account aan.';
         case 'network-request-failed':
-          throw 'Netwerkverbinding mislukt. Controleer je internetverbinding.';
+          throw 'Netwerkverbinding mislukt. Controleer je internetverbinding en probeer het opnieuw.';
         default:
-          throw 'Wachtwoord resetten mislukt: ${e.message ?? e.code}';
+          throw 'Wachtwoord resetten mislukt: ${e.message ?? "Onbekende fout"}';
       }
     } catch (e) {
       if (kDebugMode) {
         print('Unexpected error during password reset: $e');
       }
-      throw 'Er is een onverwachte fout opgetreden: $e';
+      throw 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.';
     }
   }
   
@@ -197,7 +197,7 @@ class AuthService with ChangeNotifier {
         if (kDebugMode) {
           print('No user currently signed in');
         }
-        throw 'Geen gebruiker ingelogd om te converteren.';
+        throw 'Je bent niet ingelogd. Log eerst in om een account aan te maken.';
       }
       
       if (!currentUser!.isAnonymous) {
@@ -242,25 +242,25 @@ class AuthService with ChangeNotifier {
       
       switch (e.code) {
         case 'email-already-in-use':
-          throw 'Dit e-mailadres is al in gebruik.';
+          throw 'Dit e-mailadres is al in gebruik. Log in met dit e-mailadres of gebruik een ander e-mailadres.';
         case 'invalid-credential':
-          throw 'Ongeldige referenties.';
+          throw 'Ongeldige gegevens. Controleer je e-mailadres en wachtwoord.';
         case 'weak-password':
           throw 'Het wachtwoord is te zwak. Kies een sterker wachtwoord.';
         case 'operation-not-allowed':
-          throw 'Deze bewerking is niet toegestaan.';
+          throw 'Deze functie is momenteel niet beschikbaar. Probeer het later opnieuw.';
         case 'provider-already-linked':
-          throw 'Account is al gekoppeld aan een andere provider.';
+          throw 'Dit account is al gekoppeld aan een e-mailadres.';
         case 'network-request-failed':
-          throw 'Netwerkverbinding mislukt. Controleer je internetverbinding.';
+          throw 'Netwerkverbinding mislukt. Controleer je internetverbinding en probeer het opnieuw.';
         default:
-          throw 'Account converteren mislukt: ${e.message ?? e.code}';
+          throw 'Account converteren mislukt: ${e.message ?? "Onbekende fout"}';
       }
     } catch (e) {
       if (kDebugMode) {
         print('Unexpected error during account conversion: $e');
       }
-      throw 'Er is een onverwachte fout opgetreden bij het converteren: $e';
+      throw 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.';
     }
   }
   
@@ -276,8 +276,10 @@ class AuthService with ChangeNotifier {
         'email': user.email ?? '',
         'anonymous': isAnonymous,
         'createdAt': FieldValue.serverTimestamp(),
+        'lastLogin': FieldValue.serverTimestamp(),
         'profileData': {
           'favoriteCategories': [],
+          'username': user.email?.split('@').first ?? 'Gebruiker',
         },
       }, SetOptions(merge: true));
       
@@ -288,14 +290,16 @@ class AuthService with ChangeNotifier {
       if (kDebugMode) {
         print('Error creating user document: $e');
       }
-      throw 'Gebruikersdocument aanmaken mislukt: $e';
+      throw 'Gebruikersprofiel aanmaken mislukt. Je kunt nog steeds inloggen, maar sommige functies werken mogelijk niet correct.';
     }
   }
   
   // Update user document in Firestore
   Future<void> _updateUserDocument(User user, {bool? isAnonymous}) async {
     try {
-      Map<String, dynamic> data = {};
+      Map<String, dynamic> data = {
+        'lastLogin': FieldValue.serverTimestamp(),
+      };
       
       if (isAnonymous != null) {
         data['anonymous'] = isAnonymous;
@@ -320,7 +324,7 @@ class AuthService with ChangeNotifier {
       if (kDebugMode) {
         print('Error updating user document: $e');
       }
-      throw 'Gebruikersdocument bijwerken mislukt: $e';
+      // Non-critical error, don't throw
     }
   }
   
@@ -330,6 +334,7 @@ class AuthService with ChangeNotifier {
       if (currentUser != null) {
         await _firestore.collection('users').doc(currentUser!.uid).update({
           'profileData': profileData,
+          'updatedAt': FieldValue.serverTimestamp(),
         });
         notifyListeners();
       }
@@ -337,7 +342,112 @@ class AuthService with ChangeNotifier {
       if (kDebugMode) {
         print('Error updating user profile: $e');
       }
-      throw 'Profiel bijwerken mislukt: $e';
+      throw 'Profiel bijwerken mislukt. Controleer je internetverbinding en probeer het opnieuw.';
+    }
+  }
+  
+  // Update user email
+  Future<void> updateEmail(String newEmail, String password) async {
+    try {
+      if (currentUser == null) {
+        throw 'Je bent niet ingelogd.';
+      }
+      
+      // Re-authenticate user first
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: currentUser!.email!, 
+        password: password
+      );
+      
+      await currentUser!.reauthenticateWithCredential(credential);
+      
+      // Update email
+      await currentUser!.updateEmail(newEmail);
+      
+      // Update user document in Firestore
+      await _firestore.collection('users').doc(currentUser!.uid).update({
+        'email': newEmail,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print('Firebase Auth Error during email update: ${e.code} - ${e.message}');
+      }
+      
+      switch (e.code) {
+        case 'requires-recent-login':
+          throw 'Je moet opnieuw inloggen om je e-mailadres te wijzigen. Log uit en dan weer in.';
+        case 'invalid-credential':
+          throw 'Onjuist wachtwoord. Controleer je wachtwoord.';
+        case 'email-already-in-use':
+          throw 'Dit e-mailadres is al in gebruik. Kies een ander e-mailadres.';
+        case 'invalid-email':
+          throw 'Ongeldig e-mailadres. Controleer of je het juiste e-mailadres hebt ingevoerd.';
+        default:
+          throw 'E-mailadres bijwerken mislukt: ${e.message ?? "Onbekende fout"}';
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Unexpected error during email update: $e');
+      }
+      throw 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.';
+    }
+  }
+  
+  // Update user password
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    try {
+      if (currentUser == null || currentUser!.email == null) {
+        throw 'Je bent niet ingelogd of gebruikt een anoniem account.';
+      }
+      
+      // Re-authenticate user first
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: currentUser!.email!, 
+        password: currentPassword
+      );
+      
+      await currentUser!.reauthenticateWithCredential(credential);
+      
+      // Update password
+      await currentUser!.updatePassword(newPassword);
+      
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print('Firebase Auth Error during password update: ${e.code} - ${e.message}');
+      }
+      
+      switch (e.code) {
+        case 'requires-recent-login':
+          throw 'Je moet opnieuw inloggen om je wachtwoord te wijzigen. Log uit en dan weer in.';
+        case 'invalid-credential':
+          throw 'Onjuist wachtwoord. Controleer je huidige wachtwoord.';
+        case 'weak-password':
+          throw 'Het nieuwe wachtwoord is te zwak. Kies een sterker wachtwoord.';
+        default:
+          throw 'Wachtwoord bijwerken mislukt: ${e.message ?? "Onbekende fout"}';
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Unexpected error during password update: $e');
+      }
+      throw 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.';
+    }
+  }
+  
+  // Check if email is already in use
+  Future<bool> isEmailAlreadyInUse(String email) async {
+    try {
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
+      return methods.isNotEmpty;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking if email is in use: $e');
+      }
+      return false; // Default to false on error to allow registration attempt
     }
   }
 }

@@ -14,12 +14,52 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> {
+class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
   bool _isLoading = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  String? _errorMessage;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.2, 0.7, curve: Curves.easeOut),
+      ),
+    );
+    
+    _animationController.forward();
+  }
+  
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
   
   Future<void> _continueAsGuest() async {
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
     
     try {
@@ -45,14 +85,8 @@ class _AuthScreenState extends State<AuthScreen> {
       }
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fout bij anoniem inloggen: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-        
         setState(() {
+          _errorMessage = e.toString();
           _isLoading = false;
         });
       }
@@ -61,6 +95,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
     final authService = Provider.of<AuthService>(context);
     
     // If user is already authenticated, redirect to home screen
@@ -97,130 +132,262 @@ class _AuthScreenState extends State<AuthScreen> {
           gradient: AppTheme.primaryGradient,
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo
-                Image.asset(
-                  'assets/images/logo.png',
-                  width: 120,
-                  height: 120,
-                  errorBuilder: (context, error, stackTrace) {
-                    if (kDebugMode) {
-                      print('Error loading logo: $error');
-                    }
-                    // Fallback if logo image is missing
-                    return Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
+          child: Stack(
+            children: [
+              // Background elements
+              Positioned(
+                top: -screenHeight * 0.1,
+                right: -100,
+                child: Container(
+                  height: 200,
+                  width: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -screenHeight * 0.15,
+                left: -150,
+                child: Container(
+                  height: 300,
+                  width: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                ),
+              ),
+              
+              // Main content
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Column(
+                    children: [
+                      SizedBox(height: screenHeight * 0.08),
+                      
+                      // Logo
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            width: 100,
+                            height: 100,
+                            errorBuilder: (context, error, stackTrace) {
+                              if (kDebugMode) {
+                                print('Error loading logo: $error');
+                              }
+                              // Fallback if logo image is missing
+                              return Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.people,
+                                  size: 50,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.people,
-                        size: 60,
-                        color: Colors.white,
+                      
+                      SizedBox(height: screenHeight * 0.04),
+                      
+                      // Welcome title
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: const Text(
+                            'Welkom bij Jongerenpunt',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Welcome title
-                const Text(
-                  'Welkom bij Jongerenpunt',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Welcome description
-                const Text(
-                  'Jouw gids voor informatie over financiën, gezondheid, onderwijs, wonen en meer',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 64),
-                
-                // Login button
-                ElevatedButton(
-                  onPressed: _isLoading 
-                      ? null 
-                      : () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
+                      
+                      SizedBox(height: screenHeight * 0.02),
+                      
+                      // Welcome description
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: const Text(
+                            'Jouw gids voor informatie over financiën, gezondheid, onderwijs, wonen en meer',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                              height: 1.4,
                             ),
-                          );
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primaryStart,
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  child: const Text('Inloggen'),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Register button
-                ElevatedButton(
-                  onPressed: _isLoading 
-                      ? null 
-                      : () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 50),
-                    side: const BorderSide(color: Colors.white),
-                  ),
-                  child: const Text('Registreren'),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Continue as guest
-                TextButton(
-                  onPressed: _isLoading ? null : _continueAsGuest,
-                  child: _isLoading
-                      ? const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                      
+                      SizedBox(height: screenHeight * 0.06),
+                      
+                      // Error message if any
+                      if (_errorMessage != null)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: Icon(Icons.error_outline, color: Colors.red, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      
+                      // Login button
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: _buildButton(
+                            text: 'Inloggen',
+                            icon: Icons.login,
+                            isPrimary: true,
+                            onPressed: _isLoading 
+                                ? null 
+                                : () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => const LoginScreen(),
+                                      ),
+                                    );
+                                  },
+                          ),
+                        ),
+                      ),
+                      
+                      SizedBox(height: screenHeight * 0.02),
+                      
+                      // Register button
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: _buildButton(
+                            text: 'Registreren',
+                            icon: Icons.person_add,
+                            isPrimary: false,
+                            onPressed: _isLoading 
+                                ? null 
+                                : () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => const RegisterScreen(),
+                                      ),
+                                    );
+                                  },
+                          ),
+                        ),
+                      ),
+                      
+                      SizedBox(height: screenHeight * 0.04),
+                      
+                      // Continue as guest
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: TextButton.icon(
+                            onPressed: _isLoading ? null : _continueAsGuest,
+                            icon: _isLoading
+                                ? Container(
+                                    width: 18,
+                                    height: 18,
+                                    padding: const EdgeInsets.all(2),
+                                    child: const CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.0,
+                                    ),
+                                  )
+                                : const Icon(Icons.remove_red_eye, color: Colors.white70, size: 18),
+                            label: Text(
+                              _isLoading ? 'Even geduld...' : 'Doorgaan zonder account',
+                              style: const TextStyle(
                                 color: Colors.white,
-                                strokeWidth: 2.0,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            SizedBox(width: 12),
-                            Text('Even geduld...', style: TextStyle(color: Colors.white)),
-                          ],
-                        )
-                      : const Text('Anoniem doorgaan', style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      ),
+                      
+                      SizedBox(height: screenHeight * 0.04),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildButton({
+    required String text,
+    required IconData icon,
+    required bool isPrimary,
+    required VoidCallback? onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 55,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        label: Text(text),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isPrimary ? Colors.white : Colors.transparent,
+          foregroundColor: isPrimary ? AppColors.primaryStart : Colors.white,
+          elevation: isPrimary ? 0 : 0,
+          side: isPrimary 
+              ? null 
+              : const BorderSide(color: Colors.white),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
