@@ -311,7 +311,7 @@ class _ContactScreenState extends State<ContactScreen> {
                         ),
                       ),
                       title: const Text('E-mail'),
-                      subtitle: const Text('info@jongerenpunt.nl'),
+                      subtitle: const Text('info@jongerenpuntovervecht.nl'),
                       onTap: _openEmailApp,
                     ),
                     

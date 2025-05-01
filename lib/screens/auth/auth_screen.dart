@@ -346,7 +346,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                       )
                                     : const Icon(Icons.remove_red_eye, color: Colors.white70, size: 18),
                                 label: Text(
-                                  _isLoading ? 'Even geduld...' : 'Doorgaan zonder account',
+                                  _isLoading ? 'Even geduld...' : 'ga anoniem verder',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,

@@ -12,7 +12,7 @@ class AppConstants {
   static const String baseApiUrl = 'https://api.example.com';
   
   // OpenAI API Settings
-  static const String openAIApiKey = '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'; // Replace with actual key
+  static const String openAIApiKey = ''; // Replace with actual key
   static const String openAIModel = 'gpt-4o'; // or gpt-4 if using that model
   static const int openAIMaxTokens = 1000; // Maximum tokens for response
   static const double openAITemperature = 0.7; // 0.0 = deterministic, 1.0 = creative

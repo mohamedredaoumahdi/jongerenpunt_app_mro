@@ -420,40 +420,40 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       ),
                     
                     // Let op tag if present
-                    if (subcategory.letOp != null && subcategory.letOp!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: AppColors.warning.withOpacity(0.5),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.warning_amber_rounded,
-                                color: AppColors.warning,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 4),
-                              const Text(
-                                'Let op',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.warning,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    // if (subcategory.letOp != null && subcategory.letOp!.isNotEmpty)
+                    //   Padding(
+                    //     padding: const EdgeInsets.only(top: 8),
+                    //     child: Container(
+                    //       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    //       decoration: BoxDecoration(
+                    //         color: AppColors.warning.withOpacity(0.1),
+                    //         borderRadius: BorderRadius.circular(4),
+                    //         border: Border.all(
+                    //           color: AppColors.warning.withOpacity(0.5),
+                    //           width: 1,
+                    //         ),
+                    //       ),
+                    //       child: Row(
+                    //         mainAxisSize: MainAxisSize.min,
+                    //         children: [
+                    //           const Icon(
+                    //             Icons.warning_amber_rounded,
+                    //             color: AppColors.warning,
+                    //             size: 14,
+                    //           ),
+                    //           const SizedBox(width: 4),
+                    //           const Text(
+                    //             'Let op',
+                    //             style: TextStyle(
+                    //               fontSize: 12,
+                    //               color: AppColors.warning,
+                    //               fontWeight: FontWeight.bold,
+                    //             ),
+                    //           ),
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   ),
                   ],
                 ),
               ),
